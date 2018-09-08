@@ -13,3 +13,13 @@ void initClipboard(string path)
         return;
     File(path, "w");
 }
+
+void resetClipboard(string path)
+{
+    File(path, "w");
+}
+
+auto listClipboard(string path)
+{
+    return path.File.byLine;
+}
