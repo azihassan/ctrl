@@ -1,4 +1,5 @@
 import std.stdio : writeln, File;
+import std.string : strip;
 import std.path : buildPath;
 import std.file : getcwd;
 import std.getopt;
@@ -25,8 +26,17 @@ void main(string[] args)
     }
 
     initClipboard(getClipboardPath());
+    auto pending = buildPath(getcwd, args[1]);
     if(verbosity > 0)
-        writeln("Copying ", args[1]);
+        writeln("Copying ", pending);
 
-    File(getClipboardPath(), "a").writeln(buildPath(getcwd, args[1]));
+    foreach(entry; listClipboard(getClipboardPath))
+    {
+        if(entry.strip == pending.strip)
+        {
+            writeln(pending, " is already queued for copying");
+            return;
+        }
+    }
+    File(getClipboardPath(), "a").writeln(pending);
 }
