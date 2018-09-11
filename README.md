@@ -6,6 +6,7 @@ Pastard is a terminal tool that allows you to copy a file THEN paste it elsewher
 
 The most common use case is to run ctrlc on a file, cd to another directory or move to another terminal window, then call ctrlp there :
 
+```bash
 $ mkdir a
 $ echo foobar > a/file
 $ ctrlc a/file
@@ -16,5 +17,6 @@ $ ls
 file
 $ cat file
 foobar
+```
 
 As this tool is under development, further examples and details will be added down the road.
