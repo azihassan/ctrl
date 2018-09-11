@@ -1,4 +1,4 @@
-# Pastard
+# Pastard [![Build Status](https://travis-ci.com/azihassan/pastard.svg?branch=master)](https://travis-ci.com/azihassan/pastard)
 
 Pastard is a terminal tool that allows you to copy a file THEN paste it elsewhere. It reproduces the copy/pasting behavior of file explorers on the terminal.
 
