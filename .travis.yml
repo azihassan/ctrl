@@ -1,0 +1,2 @@
+language: d
+script: dmd ctrlc.d ctrlp.d utils.d
