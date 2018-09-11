@@ -40,6 +40,11 @@ void main(string[] args)
         if(verbosity > 0)
             writeln("Copying ", entry, " to ", getcwd);
 
+        if(!entry.exists)
+        {
+            writeln(entry, " no longer exists.");
+            continue;
+        }
         copy(entry, buildPath(getcwd, entry.baseName));
     }
 }
