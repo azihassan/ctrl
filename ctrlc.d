@@ -19,9 +19,9 @@ void main(string[] args)
         return;
     }
 
-    if(args.length == 1 && verbosity > 0)
+    if(args.length == 1)
     {
-        writeln("Nothing to do here.");
+        defaultGetoptPrinter("Pastard - ctrlc", result.options);
         return;
     }
 
