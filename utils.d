@@ -1,25 +1,37 @@
-import std.path;
+import std.array : array;
 import std.file : exists;
-import std.stdio : File;
+import std.stdio : File, lines;
 
-string getClipboardPath()
+struct Clipboard
 {
-    return expandTilde("~/.pastard.clipboard");
-}
+    string path;
 
-void initClipboard(string path)
-{
-    if(path.exists)
-        return;
-    File(path, "w");
-}
+    this(string path)
+    {
+        this.path = path;
+        init();
+    }
 
-void resetClipboard(string path)
-{
-    File(path, "w");
-}
+    void init()
+    {
+        if(!path.exists)
+        {
+            File(path, "w");
+        }
+    }
 
-auto listClipboard(string path)
-{
-    return path.File.byLine;
+    void reset()
+    {
+        File(path, "w");
+    }
+
+    auto list() const
+    {
+        return path.File.byLine;
+    }
+
+    void append(string pending)
+    {
+        File(path, "a").writeln(pending);
+    }
 }
