@@ -4,6 +4,7 @@ import std.path : buildPath;
 import std.file : getcwd;
 import std.getopt;
 import utils;
+import config;
 
 void main(string[] args)
 {
@@ -13,24 +14,18 @@ void main(string[] args)
         "v|verbosity+", "Verbosity level", &verbosity,
     );
 
-    if(result.helpWanted)
+    if(result.helpWanted || args.length == 1)
     {
         defaultGetoptPrinter("Pastard - ctrlc", result.options);
         return;
     }
 
-    if(args.length == 1)
-    {
-        defaultGetoptPrinter("Pastard - ctrlc", result.options);
-        return;
-    }
-
-    initClipboard(getClipboardPath());
+    auto clipboard = Clipboard(getClipboardPath());
+    auto logger = Logger(verbosity);
     auto pending = buildPath(getcwd, args[1]);
-    if(verbosity > 0)
-        writeln("Copying ", pending);
+    logger("Copying " ~ pending);
 
-    foreach(entry; listClipboard(getClipboardPath))
+    foreach(char[] entry; clipboard.list())
     {
         if(entry.strip == pending.strip)
         {
@@ -38,5 +33,5 @@ void main(string[] args)
             return;
         }
     }
-    File(getClipboardPath(), "a").writeln(pending);
+    clipboard.append(pending);
 }

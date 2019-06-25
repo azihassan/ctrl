@@ -4,6 +4,7 @@ import std.path;
 import std.file;
 import std.getopt;
 import utils;
+import config;
 
 void main(string[] args)
 {
@@ -22,23 +23,28 @@ void main(string[] args)
         return;
     }
 
+    auto clipboard = Clipboard(getClipboardPath());
+    auto logger = Logger(verbosity);
     if(list)
     {
-        listClipboard(getClipboardPath()).each!writeln;
+        clipboard.list().each!writeln;
         return;
     }
 
     if(reset)
     {
-        resetClipboard(getClipboardPath());
+        clipboard.reset();
         return;
     }
 
-    scope(success) resetClipboard(getClipboardPath);
-    foreach(entry; File(getClipboardPath()).byLine)
+    scope(success)
     {
-        if(verbosity > 0)
-            writeln("Copying ", entry, " to ", getcwd);
+        clipboard.reset();
+    }
+
+    foreach(char[] entry; clipboard.list())
+    {
+        logger("Copying " ~ entry ~ " to " ~ getcwd);
 
         if(!entry.exists)
         {
