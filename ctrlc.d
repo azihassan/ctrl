@@ -21,11 +21,9 @@ void main(string[] args)
     }
 
     auto clipboard = Clipboard(getClipboardPath());
+    auto logger = Logger(verbosity);
     auto pending = buildPath(getcwd, args[1]);
-    if(verbosity > 0)
-    {
-        writeln("Copying ", pending);
-    }
+    logger("Copying " ~ pending);
 
     foreach(char[] entry; clipboard.list())
     {

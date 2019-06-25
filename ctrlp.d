@@ -24,6 +24,7 @@ void main(string[] args)
     }
 
     auto clipboard = Clipboard(getClipboardPath());
+    auto logger = Logger(verbosity);
     if(list)
     {
         clipboard.list().each!writeln;
@@ -43,10 +44,7 @@ void main(string[] args)
 
     foreach(char[] entry; clipboard.list())
     {
-        if(verbosity > 0)
-        {
-            writeln("Copying ", entry, " to ", getcwd);
-        }
+        logger("Copying " ~ entry ~ " to " ~ getcwd);
 
         if(!entry.exists)
         {
