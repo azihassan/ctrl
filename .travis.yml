@@ -1,2 +1,2 @@
 language: d
-script: dmd ctrlc.d utils.d && dmd ctrlp.d utils.d
+script: dmd ctrlc.d config.d utils.d && dmd ctrlp.d config.d utils.d
