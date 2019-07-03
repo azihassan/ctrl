@@ -1,7 +1,10 @@
 import std.traits : isSomeString;
+import std.range : ElementType, isInputRange;
 import std.array : array;
 import std.file : exists;
+import std.string : strip;
 import std.stdio : File, lines;
+import std.algorithm : each;
 
 struct Clipboard
 {
@@ -11,6 +14,18 @@ struct Clipboard
     {
         this.path = path;
         init();
+    }
+
+    bool has(string path) const
+    {
+        foreach(char[] entry; list())
+        {
+            if(entry.strip == path.strip)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     void init()
@@ -35,6 +50,12 @@ struct Clipboard
     {
         File(path, "a").writeln(pending);
     }
+
+    void append(StringRange)(StringRange pending) if(isInputRange!StringRange && isSomeString!(ElementType!StringRange))
+    {
+        auto fh = File(path, "a");
+        pending.each!(p => fh.writeln(p));
+    }
 }
 
 struct Logger
@@ -46,7 +67,7 @@ struct Logger
         this.verbosity = verbosity;
     }
 
-    void log(T)(lazy T dg) if(isSomeString!T)
+    void log(T)(lazy T dg) const if(isSomeString!T)
     {
         if(verbosity)
         {
@@ -54,7 +75,7 @@ struct Logger
         }
     }
 
-    void opCall(T)(lazy T dg) if(isSomeString!T)
+    void opCall(T)(lazy T dg) const if(isSomeString!T)
     {
         log(dg);
     }
