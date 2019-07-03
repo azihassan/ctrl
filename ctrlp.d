@@ -19,7 +19,7 @@ void main(string[] args)
 
     if(result.helpWanted)
     {
-        defaultGetoptPrinter("Pastard - ctrlc", result.options);
+        defaultGetoptPrinter("Pastard - ctrlp", result.options);
         return;
     }
 
@@ -37,20 +37,26 @@ void main(string[] args)
         return;
     }
 
-    scope(success)
-    {
-        clipboard.reset();
-    }
-
+    char[][] remaining;
     foreach(char[] entry; clipboard.list())
     {
         logger("Copying " ~ entry ~ " to " ~ getcwd);
+        immutable localFile = buildPath(getcwd, entry.baseName);
+        if(localFile.exists)
+        {
+            remaining ~= entry.dup;
+            writeln(entry.baseName, " already exists in this directory.");
+            continue;
+        }
 
         if(!entry.exists)
         {
             writeln(entry, " no longer exists.");
             continue;
         }
-        copy(entry, buildPath(getcwd, entry.baseName));
+        copy(entry, localFile);
     }
+
+    clipboard.reset();
+    clipboard.append(remaining);
 }
