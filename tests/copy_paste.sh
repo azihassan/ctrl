@@ -22,9 +22,9 @@ content=$(cat a)
 expected=foo
 
 if [ "$content" = "$expected" ]; then
-    echo OK
+    echo 1/1 OK
 else
-    echo Failed
+    echo 1/1 Failed
 fi
 
 #cleanup
