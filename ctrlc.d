@@ -1,6 +1,6 @@
 import std.stdio : writeln, File;
 import std.path : buildPath;
-import std.file : getcwd;
+import std.file : getcwd, exists;
 import std.getopt;
 import utils;
 import config;
@@ -24,6 +24,12 @@ void main(string[] args)
     immutable logger = Logger(verbosity);
     immutable pending = buildPath(getcwd, args[1]);
     logger("Copying " ~ pending);
+
+    if(!pending.exists)
+    {
+        writeln(pending, " does not exist");
+        return;
+    }
 
     if(clipboard.has(pending))
     {
