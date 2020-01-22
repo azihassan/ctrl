@@ -1,0 +1,16 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: mihails-strasuns/setup-dlang@v0.3.0
+      name: Installing DMD
+    - name: Building
+      run: dmd ctrlc.d config.d utils.d && dmd ctrlp.d config.d utils.d
+
