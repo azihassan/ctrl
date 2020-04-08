@@ -22,19 +22,22 @@ void main(string[] args)
     auto clipboard = Clipboard(getClipboardPath());
 
     immutable logger = Logger(verbosity);
-    immutable pending = buildPath(getcwd, args[1]);
-    logger("Copying " ~ pending);
-
-    if(!pending.exists)
+    foreach(arg; args[1 .. $])
     {
-        writeln(pending, " does not exist");
-        return;
-    }
+        immutable pending = buildPath(getcwd, arg);
+        logger("Copying " ~ pending);
 
-    if(clipboard.has(pending))
-    {
-        writeln(pending, " is already queued for copying");
-        return;
+        if(!pending.exists)
+        {
+            writeln(pending, " does not exist");
+            continue;
+        }
+
+        if(clipboard.has(pending))
+        {
+            writeln(pending, " is already queued for copying");
+            continue;
+        }
+        clipboard.append(pending);
     }
-    clipboard.append(pending);
 }
