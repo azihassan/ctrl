@@ -5,6 +5,8 @@ import std.file : exists;
 import std.string : strip;
 import std.stdio : File, lines;
 import std.algorithm : each;
+import std.file : mkdirRecurse;
+import std.path : dirName;
 
 struct Clipboard
 {
@@ -32,6 +34,7 @@ struct Clipboard
     {
         if(!path.exists)
         {
+            path.dirName.mkdirRecurse();
             File(path, "w");
         }
     }
