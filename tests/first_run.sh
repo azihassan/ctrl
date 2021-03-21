@@ -1,5 +1,4 @@
-alias ctrlc=$(pwd)/../ctrlc
-alias ctrlp=$(pwd)/../ctrlp
+alias pastard=$(pwd)/../pastard
 
 rm -rf ~/.config/pastard
 
@@ -9,7 +8,7 @@ echo Running $0
 touch a
 
 #test
-content=$(ctrlc a && ctrlp --list)
+content=$(pastard -c a && pastard -p --list)
 expected="$(pwd)/a"
 
 if [ -f ~/.config/pastard/clipboard ]; then
@@ -30,4 +29,4 @@ fi
 
 #cleanup
 rm a
-ctrlp --reset
+pastard -p --reset

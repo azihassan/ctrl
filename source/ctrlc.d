@@ -5,7 +5,7 @@ import std.getopt;
 import utils;
 import config;
 
-void main(string[] args)
+void run(string[] args)
 {
     int verbosity;
     auto result = args.getopt(

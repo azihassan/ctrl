@@ -1,30 +1,29 @@
-alias ctrlc=$(pwd)/../ctrlc
-alias ctrlp=$(pwd)/../ctrlp
+alias pastard=$(pwd)/../pastard
 
 echo Running $0
 
 #setup
-ctrlp --reset
+pastard -p --reset
 if [ -f a ]; then
     rm a
 fi
 
 #test
 echo foo > a
-ctrlc a
+pastard -c a
 
-if [ "$(ctrlp --list)" = "$(pwd)/a" ]; then
+if [ "$(pastard -p --list)" = "$(pwd)/a" ]; then
     echo 1/2 OK
 else
-    echo 1/2 Failed : $(ctrlp --list) != $(pwd)/a
+    echo 1/2 Failed : $(pastard -p --list) != $(pwd)/a
 fi
 
-ctrlp --reset
+pastard -p --reset
 
-if [ "$(ctrlp --list)" = "" ]; then
+if [ "$(pastard -p --list)" = "" ]; then
     echo 2/2 OK
 else
-    echo 2/2 Failed : $(ctrlp --list) is not empty
+    echo 2/2 Failed : $(pastard -p --list) is not empty
 fi
 
 #cleanup

@@ -4,15 +4,15 @@ Pastard is a terminal tool that allows you to copy a file THEN paste it elsewher
 
 # Examples
 
-The most common use case is to run ctrlc on a file, cd to another directory or move to another terminal window, then call ctrlp there :
+The most common use case is to run `pastard -c` (or `pastard --copy`) on a file, cd to another directory or move to another terminal window, then call `pastard -p` (or `pastard --paste`) there :
 
 ```bash
 $ mkdir a
 $ echo foobar > a/file
-$ ctrlc a/file
+$ pastard -c a/file
 $ mkdir b
 $ cd b
-$ ctrlp
+$ pastard -p
 $ ls
 file
 $ cat file

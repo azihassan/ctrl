@@ -1,10 +1,9 @@
-alias ctrlc=$(pwd)/../ctrlc
-alias ctrlp=$(pwd)/../ctrlp
+alias pastard=$(pwd)/../pastard
 
 echo Running $0
 
 #setup
-ctrlp --reset
+pastard -p --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -17,16 +16,16 @@ fi
 echo foo > a
 mkdir tmp
 cd tmp
-ctrlc ../a
+pastard -c ../a
 
-#if [ "$(ctrlp --list)" = "$(readlink `pwd`/../a)" ]; then
-if [ "$(ctrlp --list)" = "`pwd`/../a" ]; then
+#if [ "$(pastard -p --list)" = "$(readlink `pwd`/../a)" ]; then
+if [ "$(pastard -p --list)" = "`pwd`/../a" ]; then
     echo 1/2 OK
 else
-    echo 1/2 Failed : $(ctrlp --list) != $(pwd)/a
+    echo 1/2 Failed : $(pastard -p --list) != $(pwd)/a
 fi
 
-ctrlp
+pastard -p
 content=$(cat a)
 expected=foo
 
@@ -40,4 +39,4 @@ fi
 cd ..
 rm -rf tmp
 rm a
-ctrlp --reset
+pastard -p --reset
