@@ -1,10 +1,9 @@
-alias ctrlc=$(pwd)/../ctrlc
-alias ctrlp=$(pwd)/../ctrlp
+alias pastard=$(pwd)/../pastard
 
 echo Running $0
 
 #setup
-ctrlp --reset
+pastard -p --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -18,9 +17,9 @@ mkdir tmp
 touch tmp/a
 echo old > tmp/a
 echo new > a
-ctrlc a
+pastard -c a
 cd tmp
-content=$(ctrlp)
+content=$(pastard -p)
 expected="a already exists in this directory."
 
 if [ "$content" = "$expected" ]
@@ -30,7 +29,7 @@ else
     echo 1/3 Failed : "$expected" != "$content"
 fi
 
-ctrlp --force
+pastard -p --force
 content=$(cat a)
 expected="new"
 echo $content
@@ -43,7 +42,7 @@ else
 fi
 
 cd ..
-content=$(ctrlp --list)
+content=$(pastard -p --list)
 expected=""
 if [ "$content" = "$expected" ]
 then
@@ -55,4 +54,4 @@ fi
 #cleanup
 rm -rf tmp
 rm a
-ctrlp --reset
+pastard -p --reset

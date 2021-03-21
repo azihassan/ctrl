@@ -1,10 +1,9 @@
-alias ctrlc=$(pwd)/../ctrlc
-alias ctrlp=$(pwd)/../ctrlp
+alias pastard=$(pwd)/../pastard
 
 echo Running $0
 
 #setup
-ctrlp --reset
+pastard -p --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -19,11 +18,11 @@ touch tmp/a
 echo foo > a
 echo bar > b
 echo baz > c
-ctrlc a
-ctrlc b
-ctrlc c
+pastard -c a
+pastard -c b
+pastard -c c
 cd tmp
-content=$(ctrlp)
+content=$(pastard -p)
 expected="a already exists in this directory."
 echo $content
 
@@ -36,7 +35,7 @@ fi
 
 cd ..
 
-content=$(ctrlp --list)
+content=$(pastard -p --list)
 expected="$(pwd)/a"
 if [ "$content" = "$expected" ]
 then
@@ -50,4 +49,4 @@ rm -rf tmp
 rm a
 rm b
 rm c
-ctrlp --reset
+pastard -p --reset

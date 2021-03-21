@@ -1,15 +1,14 @@
-alias ctrlc=$(pwd)/../ctrlc
-alias ctrlp=$(pwd)/../ctrlp
+alias pastard=$(pwd)/../pastard
 
 echo Running $0
 
 #setup
-ctrlp --reset
+pastard -p --reset
 
 #test
 touch a
 rm a
-content=$(ctrlc a)
+content=$(pastard -c a)
 expected="$(pwd)/a does not exist"
 
 if [ "$content" = "$expected" ]
@@ -20,7 +19,7 @@ else
 fi
 
 touch a
-content=$(ctrlc a && ctrlp --list)
+content=$(pastard -c a && pastard -p --list)
 expected="$(pwd)/a"
 if [ "$content" = "$expected" ]
 then
@@ -31,4 +30,4 @@ fi
 
 #cleanup
 rm a
-ctrlp --reset
+pastard -p --reset

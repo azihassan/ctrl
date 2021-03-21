@@ -1,9 +1,8 @@
-alias ctrlc=$(pwd)/../ctrlc
-alias ctrlp=$(pwd)/../ctrlp
+alias pastard=$(pwd)/../pastard
 
 echo Running $0
 #setup
-ctrlp --reset
+pastard -p --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -14,10 +13,10 @@ fi
 
 #test
 echo foo > a
-ctrlc a
+pastard -c a
 mkdir tmp
 cd tmp
-ctrlp
+pastard -p
 content=$(cat a)
 expected=foo
 
@@ -31,4 +30,4 @@ fi
 cd ..
 rm -rf tmp
 rm a
-ctrlp --reset
+pastard -p --reset

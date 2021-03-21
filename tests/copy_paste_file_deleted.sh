@@ -1,10 +1,9 @@
-alias ctrlc=$(pwd)/../ctrlc
-alias ctrlp=$(pwd)/../ctrlp
+alias pastard=$(pwd)/../pastard
 
 echo Running $0
 
 #setup
-ctrlp --reset
+pastard -p --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -15,19 +14,19 @@ fi
 
 #test
 echo foo > a
-ctrlc a
+pastard -c a
 rm a
 
-if [ "$(ctrlp --list)" = "$(pwd)/a" ]; then
+if [ "$(pastard -p --list)" = "$(pwd)/a" ]; then
     echo 1/2 OK
 else
-    echo 1/2 Failed : $(ctrlp --list) != $(pwd)/a
+    echo 1/2 Failed : $(pastard -p --list) != $(pwd)/a
 fi
 
 mkdir tmp
 cd tmp
 
-content=$(ctrlp)
+content=$(pastard -p)
 cd ..
 expected="$(pwd)/a no longer exists."
 
@@ -39,4 +38,4 @@ fi
 
 #cleanup
 rm -rf tmp
-ctrlp --reset
+pastard -p --reset

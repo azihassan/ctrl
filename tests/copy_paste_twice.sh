@@ -1,10 +1,9 @@
-alias ctrlc=$(pwd)/../ctrlc
-alias ctrlp=$(pwd)/../ctrlp
+alias pastard=$(pwd)/../pastard
 
 echo Running $0
 
 #setup
-ctrlp --reset
+pastard -p --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -15,8 +14,8 @@ fi
 
 #test
 echo foo > a
-ctrlc a
-content=$(ctrlc a)
+pastard -c a
+content=$(pastard -c a)
 expected="$(pwd)/a is already queued for copying"
 
 if [ "$content" = "$expected" ]
@@ -26,7 +25,7 @@ else
     echo 1/3 Failed : "$expected" != "$content"
 fi
 
-if [ $(ctrlp --list) = "$(pwd)/a" ]
+if [ $(pastard -p --list) = "$(pwd)/a" ]
 then
     echo 2/3 OK
 else
@@ -35,7 +34,7 @@ fi
 
 mkdir tmp
 cd tmp
-ctrlp
+pastard -p
 content=$(cat a)
 expected=foo
 
@@ -49,4 +48,4 @@ fi
 cd ..
 rm -rf tmp
 rm a
-ctrlp --reset
+pastard -p --reset

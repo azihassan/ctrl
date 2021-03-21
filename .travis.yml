@@ -1,2 +1,2 @@
 language: d
-script: dmd ctrlc.d config.d utils.d && dmd ctrlp.d config.d utils.d
+script: dub build
