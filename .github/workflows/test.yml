@@ -12,5 +12,5 @@ jobs:
     - uses: mihails-strasuns/setup-dlang@v0.3.0
       name: Install DMD
     - name: Build
-      run: dmd ctrlc.d config.d utils.d && dmd ctrlp.d config.d utils.d
+      run: dub build
 
