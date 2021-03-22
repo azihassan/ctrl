@@ -1,4 +1,5 @@
 alias pastard=$(pwd)/../pastard
+status=0
 
 echo Running $0
 #setup
@@ -24,6 +25,7 @@ if [ "$content" = "$expected" ]; then
     echo 1/1 OK
 else
     echo 1/1 Failed
+    status=1
 fi
 
 #cleanup
@@ -31,3 +33,4 @@ cd ..
 rm -rf tmp
 rm a
 pastard -p --reset
+exit $status

@@ -1,4 +1,5 @@
 alias pastard=$(pwd)/../pastard
+status=0
 
 echo Running $0
 
@@ -20,6 +21,7 @@ rm a
 if [ "$(pastard -p --list)" = "$(pwd)/a" ]; then
     echo 1/2 OK
 else
+    status=1
     echo 1/2 Failed : $(pastard -p --list) != $(pwd)/a
 fi
 
@@ -33,9 +35,11 @@ expected="$(pwd)/a no longer exists."
 if [ "$content" = "$expected" ]; then
     echo 2/2 OK
 else
+    status=1
     echo 2/2 Failed : "$content" != "$expected" 
 fi
 
 #cleanup
 rm -rf tmp
 pastard -p --reset
+exit $status
