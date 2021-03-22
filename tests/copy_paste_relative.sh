@@ -1,4 +1,5 @@
 alias pastard=$(pwd)/../pastard
+status=0
 
 echo Running $0
 
@@ -22,6 +23,7 @@ pastard -c ../a
 if [ "$(pastard -p --list)" = "`pwd`/../a" ]; then
     echo 1/2 OK
 else
+    status=1
     echo 1/2 Failed : $(pastard -p --list) != $(pwd)/a
 fi
 
@@ -32,6 +34,7 @@ expected=foo
 if [ "$content" = "$expected" ]; then
     echo 2/2 OK
 else
+    status=1
     echo 2/2 Failed
 fi
 
@@ -40,3 +43,4 @@ cd ..
 rm -rf tmp
 rm a
 pastard -p --reset
+exit $status

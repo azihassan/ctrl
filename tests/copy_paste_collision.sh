@@ -1,4 +1,5 @@
 alias pastard=$(pwd)/../pastard
+status=0
 
 echo Running $0
 
@@ -30,6 +31,7 @@ if [ "$content" = "$expected" ]
 then
     echo 1/2 OK
 else
+    status=1
     echo 1/2 Failed : "$expected" != "$content"
 fi
 
@@ -41,6 +43,7 @@ if [ "$content" = "$expected" ]
 then
     echo 2/2 OK
 else
+    status=1
     echo 2/2 Failed : "$expected" != "$content"
 fi
 
@@ -50,3 +53,4 @@ rm a
 rm b
 rm c
 pastard -p --reset
+exit $status
