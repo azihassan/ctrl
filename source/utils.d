@@ -3,7 +3,7 @@ import std.range : ElementType, isInputRange;
 import std.array : array;
 import std.file : exists;
 import std.string : strip;
-import std.stdio : File, lines;
+import std.stdio : File, lines, stdout;
 import std.algorithm : each;
 import std.file : mkdirRecurse;
 import std.path : dirName;
@@ -64,22 +64,35 @@ struct Clipboard
 struct Logger
 {
     int verbosity;
+    File output;
 
-    this(int verbosity)
+    this(int verbosity, File output = stdout)
     {
         this.verbosity = verbosity;
+        this.output = output;
     }
 
-    void log(T)(lazy T dg) const if(isSomeString!T)
+    void log(Args...)(lazy Args args)
     {
         if(verbosity)
         {
-            dg();
+            output.writeln(args);
         }
     }
 
-    void opCall(T)(lazy T dg) const if(isSomeString!T)
+    void opCall(Args...)(lazy Args args)
     {
-        log(dg);
+        log(args);
     }
+}
+
+unittest
+{
+    {
+        auto logger = Logger(1, File("tmp", "w"));
+        logger("foo ", 1, " bar : ", true);
+    }
+
+    import std.file : readText;
+    assert("tmp".readText == "foo 1 bar : true\n");
 }
