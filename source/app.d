@@ -19,7 +19,7 @@ void main(string[] args)
     auto result = args.getopt(
         std.getopt.config.passThrough,
         "c|copy", "Queue given file for copying", &copy,
-        "C|cut", "Queue given file for moving", &cut,
+        "x|cut", "Queue given file for moving", &cut,
         "p|paste", "Paste clipboard contents in current directory", &paste,
 
         "l|list", "Display the pending actions", &list,
@@ -32,6 +32,7 @@ void main(string[] args)
     if(result.helpWanted)
     {
         defaultGetoptPrinter("Pastard", result.options);
+        return;
     }
 
     auto clipboard = Clipboard(getClipboardPath());
@@ -47,6 +48,12 @@ void main(string[] args)
             pending ~= tuple(buildPath(filesystem.workingDirectory, arg), Mode.COPY);
         }
         pastard.queue(pending);
+    }
+
+    if(cut)
+    {
+        writeln("--cut is not implemented yet");
+        return;
     }
 
     else if(list)
