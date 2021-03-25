@@ -30,11 +30,14 @@ struct Logger
 
 unittest
 {
-    {
-        auto logger = Logger(1, File("tmp", "w"));
-        logger("foo ", 1, " bar : ", true);
-    }
-
     import std.file : readText;
+    import std.stdio : writeln;
+
+    writeln("Test that the logger writes to the output stream");
+    auto logger = Logger(1, File("tmp", "w"));
+    logger("foo ", 1, " bar : ", true);
+
     assert("tmp".readText == "foo 1 bar : true\n");
+    writeln("OK");
+    writeln("");
 }
