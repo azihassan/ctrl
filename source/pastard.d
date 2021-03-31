@@ -1,8 +1,10 @@
 module pastard;
 
 import std.path;
+import std.conv : to;
 import std.stdio : writeln;
 import std.typecons : Flag, Tuple, No;
+import std.range : empty;
 
 import clipboard : Clipboard;
 import logging : Logger;
@@ -28,7 +30,6 @@ struct Pastard
         {
             string path = pending[0];
             Mode mode = pending[1];
-            //logger("Queuing ", path, " for mode ", mode);
             if(!filesystem.exists(path))
             {
                 logger(path, " does not exist");
@@ -52,7 +53,6 @@ struct Pastard
         Error[] errors;
         foreach(char[] entry; clipboard.list())
         {
-            //logger("Copying ", entry, " to ", filesystem.workingDirectory());
             immutable localFile = buildPath(filesystem.workingDirectory, entry.baseName);
             if(filesystem.exists(localFile) && !force)
             {
@@ -70,6 +70,16 @@ struct Pastard
 
             filesystem.copy(entry.idup, localFile);
         }
+
+        clipboard.reset();
+        if(!errors.empty)
+        {
+            foreach(error; errors)
+            {
+                clipboard.append(error.subject, Mode.COPY);
+            }
+        }
+
         return errors;
     }
 }
@@ -83,6 +93,11 @@ struct Error
 {
     ErrorType type;
     string subject;
+
+    string toString()
+    {
+        return subject ~ " : " ~ type.to!string;
+    }
 }
 
 enum ErrorType
@@ -91,4 +106,246 @@ enum ErrorType
     ALREADY_QUEUED,
     ALREADY_EXISTS_IN_DESTINATION,
     NO_LONGER_EXISTS
+}
+
+version(unittest)
+{
+    import std;
+}
+
+unittest
+{
+    writeln("Should queue files correctly");
+    scope(success) writeln("OK\n");
+
+    string clipboardPath = "/tmp/clipboard.tmp";
+    string logPath = "/tmp/clipboard.log";
+    scope(exit) clipboardPath.remove();
+    scope(exit) logPath.remove();
+
+    auto clipboard = Clipboard(clipboardPath);
+    auto filesystem = Filesystem();
+    auto logger = Logger(1, File(logPath, "w"));
+    auto pastard = Pastard(clipboard, filesystem, logger);
+
+    pastard.queue([tuple(clipboardPath, Mode.COPY)]);
+    assert(clipboard.has(clipboardPath));
+}
+
+unittest
+{
+    writeln("Should return NOT FOUND if queued path is incorrect");
+    scope(success) writeln("OK\n");
+
+    string clipboardPath = "/tmp/clipboard.tmp";
+    string logPath = "/tmp/clipboard.log";
+    scope(exit) clipboardPath.remove();
+    scope(exit) logPath.remove();
+
+    auto clipboard = Clipboard(clipboardPath);
+    auto filesystem = Filesystem();
+    auto logger = Logger(1, File(logPath, "w"));
+    auto pastard = Pastard(clipboard, filesystem, logger);
+
+    string bogusPath = "/foo/bar";
+    auto errors = pastard.queue([tuple(bogusPath, Mode.COPY)]);
+    assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
+    assert(errors[0].type == ErrorType.NOT_FOUND);
+    assert(errors[0].subject == bogusPath);
+    assert(!clipboard.has(bogusPath), "Expected clipboard not to have " ~ bogusPath);
+}
+
+unittest
+{
+    writeln("Should return ALREADY_QUEUED if path is queued twice");
+    scope(success) writeln("OK\n");
+
+    string clipboardPath = "/tmp/clipboard.tmp";
+    string logPath = "/tmp/clipboard.log";
+    scope(exit) clipboardPath.remove();
+    scope(exit) logPath.remove();
+
+    auto clipboard = Clipboard(clipboardPath);
+    auto filesystem = Filesystem();
+    auto logger = Logger(1, File(logPath, "w"));
+    auto pastard = Pastard(clipboard, filesystem, logger);
+
+    auto errors = pastard.queue([
+        tuple(clipboardPath, Mode.COPY),
+        tuple(clipboardPath, Mode.COPY)
+    ]);
+
+    assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
+    assert(errors[0].type == ErrorType.ALREADY_QUEUED);
+    assert(errors[0].subject == clipboardPath);
+    assert(clipboard.has(clipboardPath), "Expected clipboard to have " ~ clipboardPath ~ ", but it didn't");
+}
+
+unittest
+{
+    writeln("Should return NO_LONGER_EXISTS when pasting file that was deleted after queueing");
+    scope(success) writeln("OK\n");
+
+    string clipboardPath = "/tmp/clipboard.tmp";
+    string logPath = "/tmp/clipboard.log";
+    string tmpFile = "/tmp/tmp";
+    scope(exit) clipboardPath.remove();
+    scope(exit) logPath.remove();
+    scope(exit)
+    {
+        if(tmpFile.exists)
+        {
+            tmpFile.remove();
+        }
+    }
+
+    File(tmpFile, "w").writeln("tmp");
+
+    auto clipboard = Clipboard(clipboardPath);
+    auto filesystem = Filesystem();
+    auto logger = Logger(1, File(logPath, "w"));
+    auto pastard = Pastard(clipboard, filesystem, logger);
+
+    auto errors = pastard.queue([tuple(tmpFile, Mode.COPY)]);
+    assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
+
+    tmpFile.remove();
+    assert(!tmpFile.exists);
+    errors = pastard.execute();
+
+    assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
+    assert(errors[0].type == ErrorType.NO_LONGER_EXISTS, "Expected error type to be NO_LONGER_EXISTS, instead it was " ~ errors[0].type.to!string);
+    assert(errors[0].subject == tmpFile);
+    assert(clipboard.has(tmpFile), "Expected clipboard to have " ~ tmpFile ~ ", but it didn't");
+}
+
+unittest
+{
+    writeln("Should return ALREADY_EXISTS_IN_DESTINATION when pasting file that exists in the working directory");
+    scope(success) writeln("OK\n");
+    
+    string clipboardPath = "/tmp/clipboard.tmp";
+    string logPath = "/tmp/clipboard.log";
+
+    string sourcePath = "/tmp/copyme";
+    string destinationPath = "copyme";
+
+    scope(exit) clipboardPath.remove();
+    scope(exit) logPath.remove();
+    scope(exit)
+    {
+        if(sourcePath.exists)
+        {
+            sourcePath.remove();
+        }
+        if(destinationPath.exists)
+        {
+            destinationPath.remove();
+        }
+    }
+
+    File(sourcePath, "w").write("copy me");
+    File(destinationPath, "w").write("don't overwrite me");
+
+    auto clipboard = Clipboard(clipboardPath);
+    auto filesystem = Filesystem();
+    auto logger = Logger(1, File(logPath, "w"));
+    auto pastard = Pastard(clipboard, filesystem, logger);
+
+    auto errors = pastard.queue([tuple(sourcePath, Mode.COPY)]);
+    assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
+
+    errors = pastard.execute();
+
+    assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
+    assert(errors[0].type == ErrorType.ALREADY_EXISTS_IN_DESTINATION, "Expected error type to be ALREADY_EXISTS_IN_DESTINATION, instead it was " ~ errors[0].type.to!string);
+    assert(errors[0].subject == sourcePath);
+    assert(clipboard.has(sourcePath), "Expected clipboard to still have " ~ sourcePath ~ ", but it didn't");
+    assert(destinationPath.readText() == "don't overwrite me", "Expected destination to contain 'don't overwrite me', instead it has : '" ~ destinationPath.readText() ~ "'");
+}
+
+unittest
+{
+    writeln("Should overwrite target path when pasting file that exists in the working directory with the 'force' flag");
+    scope(success) writeln("OK\n");
+
+    string clipboardPath = "/tmp/clipboard.tmp";
+    string logPath = "/tmp/clipboard.log";
+
+    string sourcePath = "/tmp/copyme";
+    string destinationPath = "copyme";
+
+    scope(exit) clipboardPath.remove();
+    scope(exit) logPath.remove();
+    scope(exit)
+    {
+        if(sourcePath.exists)
+        {
+            sourcePath.remove();
+        }
+        if(destinationPath.exists)
+        {
+            destinationPath.remove();
+        }
+    }
+
+    File(sourcePath, "w").write("copy me");
+    File(destinationPath, "w").write("don't overwrite me");
+
+    auto clipboard = Clipboard(clipboardPath);
+    auto filesystem = Filesystem();
+    auto logger = Logger(1, File(logPath, "w"));
+    auto pastard = Pastard(clipboard, filesystem, logger);
+
+    auto errors = pastard.queue([tuple(sourcePath, Mode.COPY)]);
+    assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
+
+    errors = pastard.execute(Yes.force);
+
+    assert(errors.empty, "Expected errors not to be empty, instead it was empty");
+    assert(!clipboard.has(sourcePath), "Expected clipboard not to have " ~ sourcePath ~ ", but it did");
+    assert(destinationPath.readText() == "copy me");
+}
+
+unittest
+{
+    writeln("Should paste file correctly if there are no errors");
+    scope(success) writeln("OK\n");
+
+    string clipboardPath = "/tmp/clipboard.tmp";
+    string logPath = "/tmp/clipboard.log";
+
+    string sourcePath = "/tmp/tocopy";
+    string destinationPath = "tocopy";
+
+    scope(exit) clipboardPath.remove();
+    scope(exit) logPath.remove();
+    scope(exit)
+    {
+        if(sourcePath.exists)
+        {
+            sourcePath.remove();
+        }
+        if(destinationPath.exists)
+        {
+            destinationPath.remove();
+        }
+    }
+
+    File(sourcePath, "w").write("copy me");
+
+    auto clipboard = Clipboard(clipboardPath);
+    auto filesystem = Filesystem();
+    auto logger = Logger(1, File(logPath, "w"));
+    auto pastard = Pastard(clipboard, filesystem, logger);
+
+    auto errors = pastard.queue([tuple(sourcePath, Mode.COPY)]);
+    assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
+    assert(clipboard.has(sourcePath), "Expected clipboard to have " ~ sourcePath ~ ", but it didn't");
+
+    errors = pastard.execute();
+
+    assert(errors.empty, "Expected errors to be empty, instead it has " ~ errors.map!(to!string).join(", "));
+    assert(!clipboard.has(sourcePath), "Expected clipboard not to have " ~ sourcePath ~ ", but it did");
+    assert(destinationPath.readText() == "copy me");
 }
