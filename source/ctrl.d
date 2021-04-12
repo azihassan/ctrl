@@ -1,4 +1,4 @@
-module pastard;
+module ctrl;
 
 import std.path;
 import std.conv : to;
@@ -10,7 +10,7 @@ import clipboard : Clipboard;
 import logging : Logger;
 import filesystem : Filesystem;
 
-struct Pastard
+struct Ctrl
 {
     Filesystem filesystem;
     Clipboard clipboard;
@@ -126,9 +126,9 @@ unittest
     auto clipboard = Clipboard(clipboardPath);
     auto filesystem = Filesystem();
     auto logger = Logger(1, File(logPath, "w"));
-    auto pastard = Pastard(clipboard, filesystem, logger);
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
 
-    pastard.queue([tuple(clipboardPath, Mode.COPY)]);
+    ctrl.queue([tuple(clipboardPath, Mode.COPY)]);
     assert(clipboard.has(clipboardPath));
 }
 
@@ -145,10 +145,10 @@ unittest
     auto clipboard = Clipboard(clipboardPath);
     auto filesystem = Filesystem();
     auto logger = Logger(1, File(logPath, "w"));
-    auto pastard = Pastard(clipboard, filesystem, logger);
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
 
     string bogusPath = "/foo/bar";
-    auto errors = pastard.queue([tuple(bogusPath, Mode.COPY)]);
+    auto errors = ctrl.queue([tuple(bogusPath, Mode.COPY)]);
     assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
     assert(errors[0].type == ErrorType.NOT_FOUND);
     assert(errors[0].subject == bogusPath);
@@ -168,9 +168,9 @@ unittest
     auto clipboard = Clipboard(clipboardPath);
     auto filesystem = Filesystem();
     auto logger = Logger(1, File(logPath, "w"));
-    auto pastard = Pastard(clipboard, filesystem, logger);
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
 
-    auto errors = pastard.queue([
+    auto errors = ctrl.queue([
         tuple(clipboardPath, Mode.COPY),
         tuple(clipboardPath, Mode.COPY)
     ]);
@@ -204,14 +204,14 @@ unittest
     auto clipboard = Clipboard(clipboardPath);
     auto filesystem = Filesystem();
     auto logger = Logger(1, File(logPath, "w"));
-    auto pastard = Pastard(clipboard, filesystem, logger);
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
 
-    auto errors = pastard.queue([tuple(tmpFile, Mode.COPY)]);
+    auto errors = ctrl.queue([tuple(tmpFile, Mode.COPY)]);
     assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
 
     tmpFile.remove();
     assert(!tmpFile.exists);
-    errors = pastard.execute();
+    errors = ctrl.execute();
 
     assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
     assert(errors[0].type == ErrorType.NO_LONGER_EXISTS, "Expected error type to be NO_LONGER_EXISTS, instead it was " ~ errors[0].type.to!string);
@@ -250,12 +250,12 @@ unittest
     auto clipboard = Clipboard(clipboardPath);
     auto filesystem = Filesystem();
     auto logger = Logger(1, File(logPath, "w"));
-    auto pastard = Pastard(clipboard, filesystem, logger);
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
 
-    auto errors = pastard.queue([tuple(sourcePath, Mode.COPY)]);
+    auto errors = ctrl.queue([tuple(sourcePath, Mode.COPY)]);
     assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
 
-    errors = pastard.execute();
+    errors = ctrl.execute();
 
     assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
     assert(errors[0].type == ErrorType.ALREADY_EXISTS_IN_DESTINATION, "Expected error type to be ALREADY_EXISTS_IN_DESTINATION, instead it was " ~ errors[0].type.to!string);
@@ -295,12 +295,12 @@ unittest
     auto clipboard = Clipboard(clipboardPath);
     auto filesystem = Filesystem();
     auto logger = Logger(1, File(logPath, "w"));
-    auto pastard = Pastard(clipboard, filesystem, logger);
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
 
-    auto errors = pastard.queue([tuple(sourcePath, Mode.COPY)]);
+    auto errors = ctrl.queue([tuple(sourcePath, Mode.COPY)]);
     assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
 
-    errors = pastard.execute(Yes.force);
+    errors = ctrl.execute(Yes.force);
 
     assert(errors.empty, "Expected errors not to be empty, instead it was empty");
     assert(!clipboard.has(sourcePath), "Expected clipboard not to have " ~ sourcePath ~ ", but it did");
@@ -337,13 +337,13 @@ unittest
     auto clipboard = Clipboard(clipboardPath);
     auto filesystem = Filesystem();
     auto logger = Logger(1, File(logPath, "w"));
-    auto pastard = Pastard(clipboard, filesystem, logger);
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
 
-    auto errors = pastard.queue([tuple(sourcePath, Mode.COPY)]);
+    auto errors = ctrl.queue([tuple(sourcePath, Mode.COPY)]);
     assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
     assert(clipboard.has(sourcePath), "Expected clipboard to have " ~ sourcePath ~ ", but it didn't");
 
-    errors = pastard.execute();
+    errors = ctrl.execute();
 
     assert(errors.empty, "Expected errors to be empty, instead it has " ~ errors.map!(to!string).join(", "));
     assert(!clipboard.has(sourcePath), "Expected clipboard not to have " ~ sourcePath ~ ", but it did");

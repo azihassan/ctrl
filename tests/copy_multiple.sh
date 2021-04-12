@@ -1,14 +1,14 @@
-alias pastard=$(pwd)/../pastard
+alias ctrl=$(pwd)/../ctrl
 status=0
 
 echo Running $0
 
 #setup
-pastard -p --reset
+ctrl -V --reset
 
 #test
 touch a b c
-content=$(pastard -c a b c && pastard -p --list)
+content=$(ctrl -C a b c && ctrl -V --list)
 expected="$(pwd)/a
 $(pwd)/b
 $(pwd)/c"
@@ -26,5 +26,5 @@ fi
 
 #cleanup
 rm a b c
-pastard -p --reset
+ctrl -V --reset
 exit $status

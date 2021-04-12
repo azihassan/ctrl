@@ -1,10 +1,10 @@
-alias pastard=$(pwd)/../pastard
+alias ctrl=$(pwd)/../ctrl
 status=0
 
 echo Running $0
 
 #setup
-pastard -p --reset
+ctrl -V --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -15,8 +15,8 @@ fi
 
 #test
 echo foo > a
-pastard -c a
-content=$(pastard -c a)
+ctrl -C a
+content=$(ctrl -C a)
 expected="$(pwd)/a is already queued for copying"
 
 if [ "$content" = "$expected" ]
@@ -27,7 +27,7 @@ else
     echo 1/3 Failed : "$expected" != "$content"
 fi
 
-if [ $(pastard -p --list) = "$(pwd)/a" ]
+if [ $(ctrl -V --list) = "$(pwd)/a" ]
 then
     echo 2/3 OK
 else
@@ -37,7 +37,7 @@ fi
 
 mkdir tmp
 cd tmp
-pastard -p
+ctrl -V
 content=$(cat a)
 expected=foo
 
@@ -52,5 +52,5 @@ fi
 cd ..
 rm -rf tmp
 rm a
-pastard -p --reset
+ctrl -V --reset
 exit $status

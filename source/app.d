@@ -8,7 +8,7 @@ import std.algorithm : each;
 import filesystem : Filesystem;
 import logging : Logger;
 import clipboard : Clipboard;
-import pastard : Pastard, Mode;
+import ctrl : Ctrl, Mode;
 import config;
 
 void main(string[] args)
@@ -18,9 +18,9 @@ void main(string[] args)
     int verbosity = 1;
     auto result = args.getopt(
         std.getopt.config.passThrough,
-        "c|copy", "Queue given file for copying", &copy,
-        "x|cut", "Queue given file for moving", &cut,
-        "p|paste", "Paste clipboard contents in current directory", &paste,
+        "C|copy", "Queue given file for copying", &copy,
+        "X|cut", "Queue given file for moving", &cut,
+        "V|paste", "Paste clipboard contents in current directory", &paste,
 
         "l|list", "Display the pending actions", &list,
         "r|reset", "Empty the clipboard", &reset,
@@ -31,14 +31,14 @@ void main(string[] args)
 
     if(result.helpWanted)
     {
-        defaultGetoptPrinter("Pastard", result.options);
+        defaultGetoptPrinter("Ctrl", result.options);
         return;
     }
 
     auto clipboard = Clipboard(getClipboardPath());
     auto filesystem = Filesystem();
     auto logger = Logger(verbosity);
-    auto pastard = Pastard(clipboard, filesystem, logger);
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
 
     if(copy)
     {
@@ -47,7 +47,7 @@ void main(string[] args)
         {
             pending ~= tuple(buildPath(filesystem.workingDirectory, arg), Mode.COPY);
         }
-        pastard.queue(pending);
+        ctrl.queue(pending);
     }
 
     if(cut)
@@ -68,7 +68,7 @@ void main(string[] args)
 
     else if(paste)
     {
-        auto errors = pastard.execute(force ? Yes.force : No.force);
+        auto errors = ctrl.execute(force ? Yes.force : No.force);
 
         clipboard.reset();
         if(!errors.empty)

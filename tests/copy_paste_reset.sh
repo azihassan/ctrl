@@ -1,32 +1,32 @@
-alias pastard=$(pwd)/../pastard
+alias ctrl=$(pwd)/../ctrl
 status=0
 
 echo Running $0
 
 #setup
-pastard -p --reset
+ctrl -V --reset
 if [ -f a ]; then
     rm a
 fi
 
 #test
 echo foo > a
-pastard -c a
+ctrl -C a
 
-if [ "$(pastard -p --list)" = "$(pwd)/a" ]; then
+if [ "$(ctrl -V --list)" = "$(pwd)/a" ]; then
     echo 1/2 OK
 else
     status=1
-    echo 1/2 Failed : $(pastard -p --list) != $(pwd)/a
+    echo 1/2 Failed : $(ctrl -V --list) != $(pwd)/a
 fi
 
-pastard -p --reset
+ctrl -V --reset
 
-if [ "$(pastard -p --list)" = "" ]; then
+if [ "$(ctrl -V --list)" = "" ]; then
     echo 2/2 OK
 else
     status=1
-    echo 2/2 Failed : $(pastard -p --list) is not empty
+    echo 2/2 Failed : $(ctrl -V --list) is not empty
 fi
 
 #cleanup

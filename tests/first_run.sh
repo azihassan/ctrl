@@ -1,7 +1,7 @@
-alias pastard=$(pwd)/../pastard
+alias ctrl=$(pwd)/../ctrl
 status=0
 
-rm -rf ~/.config/pastard
+rm -rf ~/.config/ctrl
 
 echo Running $0
 
@@ -9,10 +9,10 @@ echo Running $0
 touch a
 
 #test
-content=$(pastard -c a && pastard -p --list)
+content=$(ctrl -C a && ctrl -V --list)
 expected="$(pwd)/a"
 
-if [ -f ~/.config/pastard/clipboard ]; then
+if [ -f ~/.config/ctrl/clipboard ]; then
     echo 1/2 OK
 else
     status=1
@@ -32,5 +32,5 @@ fi
 
 #cleanup
 rm a
-pastard -p --reset
+ctrl -V --reset
 exit $status

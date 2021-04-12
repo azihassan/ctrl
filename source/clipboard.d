@@ -10,7 +10,7 @@ import std.file : mkdirRecurse;
 import std.path : dirName;
 import std.stdio : File;
 
-import pastard : Mode;
+import ctrl : Mode;
 
 struct Clipboard
 {
@@ -71,7 +71,7 @@ unittest
     import std.range : empty;
     import std.stdio : writeln;
 
-    string path = "/tmp/pastard/clipboard.test";
+    string path = "/tmp/ctrl/clipboard.test";
     scope(exit) path.remove();
     auto clipboard = Clipboard(path);
 
@@ -87,14 +87,14 @@ unittest
     import std.stdio : writeln;
     import std.file : remove;
     import std.array : array, join;
-    string path = "/tmp/pastard/clipboard.test";
+    string path = "/tmp/ctrl/clipboard.test";
     scope(exit) path.remove();
     auto clipboard = Clipboard(path);
 
     writeln("Test that appending a single item to clipboard is working");
-    clipboard.append("/tmp/pastard/clipboard.test", Mode.COPY);
+    clipboard.append("/tmp/ctrl/clipboard.test", Mode.COPY);
     assert(
-        clipboard.list.array == ["/tmp/pastard/clipboard.test"],
+        clipboard.list.array == ["/tmp/ctrl/clipboard.test"],
         "Clipboard does not contain expected path. Clipboard contents : " ~ clipboard.list.join(", ")
     );
     writeln("OK");
@@ -109,16 +109,16 @@ unittest
     import std.algorithm : equal;
     import std.range : chain, only;
 
-    string path = "/tmp/pastard/clipboard.test";
+    string path = "/tmp/ctrl/clipboard.test";
     scope(exit) path.remove();
     auto clipboard = Clipboard(path);
 
     writeln("Test that appending multiple items to clipboard is working");
-    clipboard.append("/tmp/pastard/clipboard.test", Mode.COPY);
+    clipboard.append("/tmp/ctrl/clipboard.test", Mode.COPY);
     auto fileList = ["/tmp/a", "/tmp/b", "tmp/c"];
     clipboard.append(fileList);
     assert(
-        clipboard.list.equal("/tmp/pastard/clipboard.test".only.chain(fileList)),
+        clipboard.list.equal("/tmp/ctrl/clipboard.test".only.chain(fileList)),
         "Clipboard does not contain expected paths. Clipboard contents : " ~ clipboard.list.join(", ")
     );
     writeln("OK");
@@ -129,7 +129,7 @@ unittest
 {
     import std.stdio : writeln;
     import std.file : remove;
-    string path = "/tmp/pastard/clipboard.test";
+    string path = "/tmp/ctrl/clipboard.test";
     scope(exit) path.remove();
     auto clipboard = Clipboard(path);
 
@@ -145,7 +145,7 @@ unittest
 {
     import std.stdio : writeln;
     import std.file : remove;
-    string path = "/tmp/pastard/clipboard.test";
+    string path = "/tmp/ctrl/clipboard.test";
     scope(exit) path.remove();
     auto clipboard = Clipboard(path);
 

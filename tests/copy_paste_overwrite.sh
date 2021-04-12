@@ -1,10 +1,10 @@
-alias pastard=$(pwd)/../pastard
+alias ctrl=$(pwd)/../ctrl
 status=0
 
 echo Running $0
 
 #setup
-pastard -p --reset
+ctrl -V --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -18,9 +18,9 @@ mkdir tmp
 touch tmp/a
 echo old > tmp/a
 echo new > a
-pastard -c a
+ctrl -C a
 cd tmp
-content=$(pastard -p)
+content=$(ctrl -V)
 expected="a already exists in this directory."
 
 if [ "$content" = "$expected" ]
@@ -31,7 +31,7 @@ else
     echo 1/3 Failed : "$expected" != "$content"
 fi
 
-pastard -p --force
+ctrl -V --force
 content=$(cat a)
 expected="new"
 echo $content
@@ -45,7 +45,7 @@ else
 fi
 
 cd ..
-content=$(pastard -p --list)
+content=$(ctrl -V --list)
 expected=""
 if [ "$content" = "$expected" ]
 then
@@ -58,5 +58,5 @@ fi
 #cleanup
 rm -rf tmp
 rm a
-pastard -p --reset
+ctrl -V --reset
 exit $status

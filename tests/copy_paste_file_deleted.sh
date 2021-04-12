@@ -1,10 +1,10 @@
-alias pastard=$(pwd)/../pastard
+alias ctrl=$(pwd)/../ctrl
 status=0
 
 echo Running $0
 
 #setup
-pastard -p --reset
+ctrl -V --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -15,20 +15,20 @@ fi
 
 #test
 echo foo > a
-pastard -c a
+ctrl -C a
 rm a
 
-if [ "$(pastard -p --list)" = "$(pwd)/a" ]; then
+if [ "$(ctrl -V --list)" = "$(pwd)/a" ]; then
     echo 1/2 OK
 else
     status=1
-    echo 1/2 Failed : $(pastard -p --list) != $(pwd)/a
+    echo 1/2 Failed : $(ctrl -V --list) != $(pwd)/a
 fi
 
 mkdir tmp
 cd tmp
 
-content=$(pastard -p)
+content=$(ctrl -V)
 cd ..
 expected="$(pwd)/a no longer exists."
 
@@ -41,5 +41,5 @@ fi
 
 #cleanup
 rm -rf tmp
-pastard -p --reset
+ctrl -V --reset
 exit $status
