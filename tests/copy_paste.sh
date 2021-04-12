@@ -1,9 +1,9 @@
-alias pastard=$(pwd)/../pastard
+alias ctrl=$(pwd)/../ctrl
 status=0
 
 echo Running $0
 #setup
-pastard -p --reset
+ctrl -V --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -14,10 +14,10 @@ fi
 
 #test
 echo foo > a
-pastard -c a
+ctrl -C a
 mkdir tmp
 cd tmp
-pastard -p
+ctrl -V
 content=$(cat a)
 expected=foo
 
@@ -32,5 +32,5 @@ fi
 cd ..
 rm -rf tmp
 rm a
-pastard -p --reset
+ctrl -V --reset
 exit $status

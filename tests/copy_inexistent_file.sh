@@ -1,15 +1,15 @@
-alias pastard=$(pwd)/../pastard
+alias ctrl=$(pwd)/../ctrl
 status=0
 
 echo Running $0
 
 #setup
-pastard -p --reset
+ctrl -V --reset
 
 #test
 touch a
 rm a
-content=$(pastard -c a)
+content=$(ctrl -C a)
 expected="$(pwd)/a does not exist"
 
 if [ "$content" = "$expected" ]
@@ -21,7 +21,7 @@ else
 fi
 
 touch a
-content=$(pastard -c a && pastard -p --list)
+content=$(ctrl -C a && ctrl -V --list)
 expected="$(pwd)/a"
 if [ "$content" = "$expected" ]
 then
@@ -33,6 +33,6 @@ fi
 
 #cleanup
 rm a
-pastard -p --reset
+ctrl -V --reset
 
 exit $status

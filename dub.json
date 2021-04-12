@@ -5,5 +5,5 @@
 	"copyright": "Copyright © 2021, Hassan Azi",
 	"description": "A terminal tool that allows you to copy a file THEN paste it elsewhere",
 	"license": "MIT",
-	"name": "pastard"
+	"name": "ctrl"
 }
