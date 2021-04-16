@@ -4,7 +4,7 @@ status=0
 echo Running $0
 
 #setup
-ctrl -V --reset
+ctrl --reset
 if [ -f a ]; then
     rm a
 fi
@@ -13,20 +13,20 @@ fi
 echo foo > a
 ctrl -C a
 
-if [ "$(ctrl -V --list)" = "$(pwd)/a" ]; then
+if [ "$(ctrl --list)" = "$(pwd)/a" ]; then
     echo 1/2 OK
 else
     status=1
-    echo 1/2 Failed : $(ctrl -V --list) != $(pwd)/a
+    echo 1/2 Failed : $(ctrl --list) != $(pwd)/a
 fi
 
-ctrl -V --reset
+ctrl --reset
 
-if [ "$(ctrl -V --list)" = "" ]; then
+if [ "$(ctrl --list)" = "" ]; then
     echo 2/2 OK
 else
     status=1
-    echo 2/2 Failed : $(ctrl -V --list) is not empty
+    echo 2/2 Failed : $(ctrl --list) is not empty
 fi
 
 #cleanup

@@ -3,6 +3,12 @@
 		"Hassan Azi"
 	],
 	"copyright": "Copyright © 2021, Hassan Azi",
+	"dependencies": {
+		"d2sqlite3": "~>0.19.1"
+	},
+	"subConfigurations": {
+		"d2sqlite3": "all-included"
+	},
 	"description": "A terminal tool that allows you to copy a file THEN paste it elsewhere",
 	"license": "MIT",
 	"name": "ctrl"

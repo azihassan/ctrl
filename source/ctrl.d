@@ -5,6 +5,9 @@ import std.conv : to;
 import std.stdio : writeln;
 import std.typecons : Flag, Tuple, No;
 import std.range : empty;
+import std.algorithm : map;
+import std.typecons : tuple, Tuple;
+import std.array : array;
 
 import clipboard : Clipboard;
 import logging : Logger;
@@ -16,7 +19,7 @@ struct Ctrl
     Clipboard clipboard;
     Logger logger;
 
-    this(Clipboard clipboard, Filesystem filesystem, Logger logger)
+    this(ref Clipboard clipboard, Filesystem filesystem, Logger logger)
     {
         this.filesystem = filesystem;
         this.clipboard = clipboard;
@@ -25,25 +28,31 @@ struct Ctrl
 
     Error[] queue(Tuple!(string, Mode)[] paths)
     {
+        return queue(paths.map!(path => tuple(path[0], path[1], No.force)).array);
+    }
+
+    Error[] queue(Tuple!(string, Mode, Flag!"force")[] paths)
+    {
         Error[] errors;
         foreach(pending; paths)
         {
             string path = pending[0];
             Mode mode = pending[1];
+            auto force = pending[2];
             if(!filesystem.exists(path))
             {
                 logger(path, " does not exist");
-                errors ~= Error(ErrorType.NOT_FOUND, path);
+                errors ~= Error(ErrorType.NOT_FOUND, path, mode);
                 continue;
             }
 
-            if(clipboard.has(path))
+            if(clipboard.has(path) && !force)
             {
                 logger(path, " is already queued for copying");
-                errors ~= Error(ErrorType.ALREADY_QUEUED, path);
+                errors ~= Error(ErrorType.ALREADY_QUEUED, path, mode);
                 continue;
             }
-            clipboard.append(pending.expand);
+            clipboard.append(path, mode);
         }
         return errors;
     }
@@ -51,24 +60,28 @@ struct Ctrl
     Error[] execute(Flag!"force" force = No.force)
     {
         Error[] errors;
-        foreach(char[] entry; clipboard.list())
+        foreach(path, mode; clipboard.list())
         {
-            immutable localFile = buildPath(filesystem.workingDirectory, entry.baseName);
+            immutable localFile = buildPath(filesystem.workingDirectory, path.baseName);
             if(filesystem.exists(localFile) && !force)
             {
-                errors ~= Error(ErrorType.ALREADY_EXISTS_IN_DESTINATION, entry.idup);
-                logger(entry.baseName, " already exists in this directory.");
+                errors ~= Error(ErrorType.ALREADY_EXISTS_IN_DESTINATION, path.idup);
+                logger(path.baseName, " already exists in this directory.");
                 continue;
             }
 
-            if(!filesystem.exists(entry))
+            if(!filesystem.exists(path))
             {
-                errors ~= Error(ErrorType.NO_LONGER_EXISTS, entry.idup);
-                logger(entry, " no longer exists.");
+                errors ~= Error(ErrorType.NO_LONGER_EXISTS, path.idup);
+                logger(path, " no longer exists.");
                 continue;
             }
 
-            filesystem.copy(entry.idup, localFile);
+            final switch(mode) with(Mode)
+            {
+                case COPY: filesystem.copy(path.idup, localFile); break;
+                case MOVE: filesystem.move(path.idup, localFile); break;
+            }
         }
 
         clipboard.reset();
@@ -93,10 +106,11 @@ struct Error
 {
     ErrorType type;
     string subject;
+    Mode mode;
 
     string toString()
     {
-        return subject ~ " : " ~ type.to!string;
+        return "[" ~ mode.to!string ~ "] " ~ subject ~ " : " ~ type.to!string;
     }
 }
 
@@ -128,7 +142,8 @@ unittest
     auto logger = Logger(1, File(logPath, "w"));
     auto ctrl = Ctrl(clipboard, filesystem, logger);
 
-    ctrl.queue([tuple(clipboardPath, Mode.COPY)]);
+    auto errors = ctrl.queue([tuple(clipboardPath, Mode.COPY)]);
+    assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
     assert(clipboard.has(clipboardPath));
 }
 
@@ -178,6 +193,54 @@ unittest
     assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
     assert(errors[0].type == ErrorType.ALREADY_QUEUED);
     assert(errors[0].subject == clipboardPath);
+    assert(clipboard.has(clipboardPath), "Expected clipboard to have " ~ clipboardPath ~ ", but it didn't");
+
+    errors = ctrl.queue([
+        tuple(clipboardPath, Mode.COPY),
+        tuple(clipboardPath, Mode.MOVE)
+    ]);
+
+    assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
+    assert(errors[0].type == ErrorType.ALREADY_QUEUED);
+    assert(errors[0].subject == clipboardPath);
+    assert(errors[0].mode == Mode.COPY);
+    assert(clipboard.has(clipboardPath, Mode.COPY), "Expected clipboard to have " ~ clipboardPath ~ ", but it didn't");
+}
+
+unittest
+{
+    writeln("Should overwrite queuing mode for already queued paths if queuing with force");
+    scope(success) writeln("OK\n");
+
+    string clipboardPath = "/tmp/clipboard.tmp";
+    string logPath = "/tmp/clipboard.log";
+    scope(exit) clipboardPath.remove();
+    scope(exit) logPath.remove();
+
+    auto clipboard = Clipboard(clipboardPath);
+    auto filesystem = Filesystem();
+    auto logger = Logger(1, File(logPath, "w"));
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
+
+    auto errors = ctrl.queue([
+        tuple(clipboardPath, Mode.COPY),
+    ]);
+    errors ~= ctrl.queue([
+        tuple(clipboardPath, Mode.MOVE, Yes.force)
+    ]);
+
+    assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
+    assert(clipboard.has(clipboardPath, Mode.MOVE), "Expected clipboard to have " ~ clipboardPath ~ ", but it didn't");
+
+    errors = ctrl.queue([
+        tuple(clipboardPath, Mode.COPY),
+        tuple(clipboardPath, Mode.MOVE)
+    ]);
+
+    assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
+    assert(errors[0].type == ErrorType.ALREADY_QUEUED);
+    assert(errors[0].subject == clipboardPath);
+    assert(errors[0].mode == Mode.COPY);
     assert(clipboard.has(clipboardPath), "Expected clipboard to have " ~ clipboardPath ~ ", but it didn't");
 }
 
@@ -348,4 +411,48 @@ unittest
     assert(errors.empty, "Expected errors to be empty, instead it has " ~ errors.map!(to!string).join(", "));
     assert(!clipboard.has(sourcePath), "Expected clipboard not to have " ~ sourcePath ~ ", but it did");
     assert(destinationPath.readText() == "copy me");
+}
+
+unittest
+{
+    writeln("Should remove original file when queuing in MOVE mode");
+    scope(success) writeln("OK\n");
+
+    string clipboardPath = "/tmp/clipboard.tmp";
+    string logPath = "/tmp/clipboard.log";
+
+    string sourcePath = "/tmp/tocopy";
+    string destinationPath = "tocopy";
+
+    scope(exit) clipboardPath.remove();
+    scope(exit) logPath.remove();
+    scope(exit)
+    {
+        if(sourcePath.exists)
+        {
+            sourcePath.remove();
+        }
+        if(destinationPath.exists)
+        {
+            destinationPath.remove();
+        }
+    }
+
+    File(sourcePath, "w").write("copy me");
+
+    auto clipboard = Clipboard(clipboardPath);
+    auto filesystem = Filesystem();
+    auto logger = Logger(1, File(logPath, "w"));
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
+
+    auto errors = ctrl.queue([tuple(sourcePath, Mode.MOVE)]);
+    assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
+    assert(clipboard.has(sourcePath), "Expected clipboard to have " ~ sourcePath ~ ", but it didn't");
+
+    errors = ctrl.execute();
+
+    assert(errors.empty, "Expected errors to be empty, instead it has " ~ errors.map!(to!string).join(", "));
+    assert(!clipboard.has(sourcePath), "Expected clipboard not to have " ~ sourcePath ~ ", but it did");
+    assert(destinationPath.readText() == "copy me");
+    assert(!sourcePath.exists);
 }

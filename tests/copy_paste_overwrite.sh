@@ -4,7 +4,7 @@ status=0
 echo Running $0
 
 #setup
-ctrl -V --reset
+ctrl --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -45,7 +45,7 @@ else
 fi
 
 cd ..
-content=$(ctrl -V --list)
+content=$(ctrl --list)
 expected=""
 if [ "$content" = "$expected" ]
 then
@@ -58,5 +58,5 @@ fi
 #cleanup
 rm -rf tmp
 rm a
-ctrl -V --reset
+ctrl --reset
 exit $status
