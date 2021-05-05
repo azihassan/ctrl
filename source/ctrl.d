@@ -48,7 +48,8 @@ struct Ctrl
 
             if(clipboard.has(path) && !force)
             {
-                logger(path, " is already queued for copying");
+                Tuple!(string, Mode) existing = clipboard.get(path);
+                logger(path, " is already queued for ", existing[1] == Mode.COPY ? "copying" : "moving");
                 errors ~= Error(ErrorType.ALREADY_QUEUED, path, mode);
                 continue;
             }
@@ -193,17 +194,18 @@ unittest
     assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
     assert(errors[0].type == ErrorType.ALREADY_QUEUED);
     assert(errors[0].subject == clipboardPath);
+    assert(errors[0].mode == Mode.COPY);
     assert(clipboard.has(clipboardPath), "Expected clipboard to have " ~ clipboardPath ~ ", but it didn't");
 
     errors = ctrl.queue([
-        tuple(clipboardPath, Mode.COPY),
-        tuple(clipboardPath, Mode.MOVE)
+        tuple(clipboardPath, Mode.MOVE),
+        tuple(clipboardPath, Mode.COPY)
     ]);
 
     assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
     assert(errors[0].type == ErrorType.ALREADY_QUEUED);
     assert(errors[0].subject == clipboardPath);
-    assert(errors[0].mode == Mode.COPY);
+    assert(errors[0].mode == Mode.MOVE);
     assert(clipboard.has(clipboardPath, Mode.COPY), "Expected clipboard to have " ~ clipboardPath ~ ", but it didn't");
 }
 

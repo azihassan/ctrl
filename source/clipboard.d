@@ -45,6 +45,19 @@ struct SqliteClipboard
         return statement.execute().oneValue!long > 0;
     }
 
+    Tuple!(string, Mode) get(string path)
+    {
+        auto statement = database.prepare("SELECT path, mode FROM queue WHERE path = :path");
+        statement.bindAll(path);
+        auto result = statement.execute();
+        if(result.empty)
+        {
+            return typeof(return).init;
+        }
+        auto row = result.front;
+        return tuple(row["path"].as!string, row["mode"].as!Mode);
+    }
+
     void init()
     {
         if(!path.exists)
