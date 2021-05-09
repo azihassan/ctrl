@@ -4,7 +4,7 @@ status=0
 echo Running $0
 
 #setup
-ctrl -V --reset
+ctrl --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -19,12 +19,11 @@ mkdir tmp
 cd tmp
 ctrl -C ../a
 
-#if [ "$(ctrl -V --list)" = "$(readlink `pwd`/../a)" ]; then
-if [ "$(ctrl -V --list)" = "`pwd`/../a" ]; then
+if [ "$(ctrl --list)" = "`pwd`/../a" ]; then
     echo 1/2 OK
 else
     status=1
-    echo 1/2 Failed : $(ctrl -V --list) != $(pwd)/a
+    echo 1/2 Failed : $(ctrl --list) != $(pwd)/a
 fi
 
 ctrl -V
@@ -42,5 +41,5 @@ fi
 cd ..
 rm -rf tmp
 rm a
-ctrl -V --reset
+ctrl --reset
 exit $status

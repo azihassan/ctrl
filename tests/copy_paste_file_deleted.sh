@@ -4,7 +4,7 @@ status=0
 echo Running $0
 
 #setup
-ctrl -V --reset
+ctrl --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -18,11 +18,11 @@ echo foo > a
 ctrl -C a
 rm a
 
-if [ "$(ctrl -V --list)" = "$(pwd)/a" ]; then
+if [ "$(ctrl --list)" = "$(pwd)/a" ]; then
     echo 1/2 OK
 else
     status=1
-    echo 1/2 Failed : $(ctrl -V --list) != $(pwd)/a
+    echo 1/2 Failed : $(ctrl --list) != $(pwd)/a
 fi
 
 mkdir tmp
@@ -41,5 +41,5 @@ fi
 
 #cleanup
 rm -rf tmp
-ctrl -V --reset
+ctrl --reset
 exit $status

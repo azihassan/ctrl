@@ -3,7 +3,7 @@ status=0
 
 echo Running $0
 #setup
-ctrl -V --reset
+ctrl --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -32,5 +32,5 @@ fi
 cd ..
 rm -rf tmp
 rm a
-ctrl -V --reset
+ctrl --reset
 exit $status

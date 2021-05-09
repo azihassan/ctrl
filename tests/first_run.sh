@@ -9,7 +9,7 @@ echo Running $0
 touch a
 
 #test
-content=$(ctrl -C a && ctrl -V --list)
+content=$(ctrl -C a && ctrl --list)
 expected="$(pwd)/a"
 
 if [ -f ~/.config/ctrl/clipboard ]; then
@@ -32,5 +32,5 @@ fi
 
 #cleanup
 rm a
-ctrl -V --reset
+ctrl --reset
 exit $status

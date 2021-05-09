@@ -4,11 +4,11 @@ status=0
 echo Running $0
 
 #setup
-ctrl -V --reset
+ctrl --reset
 
 #test
 touch a b c
-content=$(ctrl -C a b c && ctrl -V --list)
+content=$(ctrl -C a b c && ctrl --list)
 expected="$(pwd)/a
 $(pwd)/b
 $(pwd)/c"
@@ -26,5 +26,5 @@ fi
 
 #cleanup
 rm a b c
-ctrl -V --reset
+ctrl --reset
 exit $status

@@ -1,7 +1,7 @@
 import std.stdio : writeln;
 import std.getopt;
 import std.path : buildPath;
-import std.typecons : Tuple, tuple, Yes, No;
+import std.typecons : Tuple, Flag, tuple, Yes, No;
 import std.range : empty;
 import std.algorithm : each;
 
@@ -42,23 +42,27 @@ void main(string[] args)
 
     if(copy)
     {
-        Tuple!(string, Mode)[] pending;
+        Tuple!(string, Mode, Flag!"force")[] pending;
         foreach(arg; args[1 .. $])
         {
-            pending ~= tuple(buildPath(filesystem.workingDirectory, arg), Mode.COPY);
+            pending ~= tuple(buildPath(filesystem.workingDirectory, arg), Mode.COPY, force ? Yes.force : No.force);
         }
         ctrl.queue(pending);
     }
 
     if(cut)
     {
-        writeln("--cut is not implemented yet");
-        return;
+        Tuple!(string, Mode, Flag!"force")[] pending;
+        foreach(arg; args[1 .. $])
+        {
+            pending ~= tuple(buildPath(filesystem.workingDirectory, arg), Mode.MOVE, force ? Yes.force : No.force);
+        }
+        ctrl.queue(pending);
     }
 
     else if(list)
     {
-        clipboard.list().each!writeln;
+        clipboard.list().each!(pair => pair[0].writeln);
     }
 
     else if(reset)

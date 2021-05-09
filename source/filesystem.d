@@ -1,7 +1,6 @@
 module filesystem;
 
 import std.file;
-import std.stdio;
 import std.traits : isSomeString;
 
 struct Filesystem
@@ -19,5 +18,10 @@ struct Filesystem
     void copy(S)(S source, S destination) if(isSomeString!S)
     {
         std.file.copy(source, destination);
+    }
+
+    void move(S)(S source, S destination) if(isSomeString!S)
+    {
+        std.file.rename(source, destination);
     }
 }

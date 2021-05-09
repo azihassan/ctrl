@@ -4,7 +4,7 @@ status=0
 echo Running $0
 
 #setup
-ctrl -V --reset
+ctrl --reset
 if [ -f tmp ]; then
     rm -rf tmp
 fi
@@ -37,7 +37,7 @@ fi
 
 cd ..
 
-content=$(ctrl -V --list)
+content=$(ctrl --list)
 expected="$(pwd)/a"
 if [ "$content" = "$expected" ]
 then
@@ -52,5 +52,5 @@ rm -rf tmp
 rm a
 rm b
 rm c
-ctrl -V --reset
+ctrl --reset
 exit $status

@@ -15,24 +15,24 @@ fi
 
 #test
 echo foo > a
-ctrl -C a
+ctrl -X a
 content=$(ctrl -C a)
-expected="$(pwd)/a is already queued for copying"
+expected="$(pwd)/a is already queued for moving"
 
 if [ "$content" = "$expected" ]
 then
-    echo 1/3 OK
+    echo 1/4 OK
 else
     status=1
-    echo 1/3 Failed : "$expected" != "$content"
+    echo 1/4 Failed : "$expected" != "$content"
 fi
 
 if [ $(ctrl --list) = "$(pwd)/a" ]
 then
-    echo 2/3 OK
+    echo 2/4 OK
 else
     status=1
-    echo 2/3 Failed : "$expected" != "$content"
+    echo 2/4 Failed : "$expected" != "$content"
 fi
 
 mkdir tmp
@@ -42,15 +42,23 @@ content=$(cat a)
 expected=foo
 
 if [ "$content" = "$expected" ]; then
-    echo 3/3 OK
+    echo 3/4 OK
 else
     status=1
-    echo 3/3 Failed : "$expected" != "$content"
+    echo 3/4 Failed : "$expected" != "$content"
+fi
+
+
+if [ ! -f ../a ]; then
+    echo 4/4 OK
+else
+    status=1
+    echo 4/4 Failed : expected ../a not to exist, but it exists
 fi
 
 #cleanup
 cd ..
 rm -rf tmp
-rm a
+rm -f a
 ctrl --reset
 exit $status

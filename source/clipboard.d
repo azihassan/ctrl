@@ -1,20 +1,29 @@
 module clipboard;
 
-import std.traits : isSomeString;
 import std.range : ElementType, isInputRange;
 import std.array : array;
 import std.file : exists;
-import std.string : strip;
-import std.algorithm : each;
+import std.algorithm : map;
 import std.file : mkdirRecurse;
 import std.path : dirName;
 import std.stdio : File;
+import std.conv : to;
+import std.typecons : tuple, Tuple;
+
+import d2sqlite3;
 
 import ctrl : Mode;
 
-struct Clipboard
+alias Clipboard = SqliteClipboard;
+template isRangeOfPaths(R)
+{
+    enum isRangeOfPaths = isInputRange!R && is(ElementType!R == Tuple!(string, Mode));
+}
+
+struct SqliteClipboard
 {
     string path;
+    Database database;
 
     this(string path)
     {
@@ -22,16 +31,31 @@ struct Clipboard
         init();
     }
 
-    bool has(string path) const
+    bool has(string path)
     {
-        foreach(char[] entry; list())
+        auto statement = this.database.prepare("SELECT COUNT(*) FROM queue WHERE path = :path");
+        statement.bindAll(path);
+        return statement.execute().oneValue!long > 0;
+    }
+
+    bool has(string path, Mode mode)
+    {
+        auto statement = this.database.prepare("SELECT COUNT(*) FROM queue WHERE path = :path AND mode = :mode");
+        statement.bindAll(path, mode.to!string);
+        return statement.execute().oneValue!long > 0;
+    }
+
+    Tuple!(string, Mode) get(string path)
+    {
+        auto statement = database.prepare("SELECT path, mode FROM queue WHERE path = :path");
+        statement.bindAll(path);
+        auto result = statement.execute();
+        if(result.empty)
         {
-            if(entry.strip == path.strip)
-            {
-                return true;
-            }
+            return typeof(return).init;
         }
-        return false;
+        auto row = result.front;
+        return tuple(row["path"].as!string, row["mode"].as!Mode);
     }
 
     void init()
@@ -41,28 +65,47 @@ struct Clipboard
             path.dirName.mkdirRecurse();
             File(path, "w");
         }
+
+        this.database = Database(path);
+        this.database.run(`CREATE TABLE IF NOT EXISTS queue (
+            path TEXT NOT NULL UNIQUE,
+            mode TEXT NOT NULL
+        )`);
     }
 
     void reset()
     {
-        File(path, "w");
-    }
-
-    auto list() const
-    {
-        return path.File.byLine;
+        init();
+        this.database.run("DELETE FROM queue");
     }
 
     void append(string pending, Mode mode)
     {
-        File(path, "a").writeln(pending);
+        auto statement = this.database.prepare("INSERT INTO queue (path, mode) VALUES (:path, :mode) ON CONFLICT(path) DO UPDATE SET mode = :mode");
+        statement.bind(":path", pending);
+        statement.bind(":mode", mode.to!string);
+        statement.bind(":mode", mode.to!string);
+        statement.execute();
     }
 
-    void append(StringRange)(StringRange pending) if(isInputRange!StringRange && isSomeString!(ElementType!StringRange))
+    void append(Paths)(Paths pending) if(isRangeOfPaths!Paths)
     {
-        auto fh = File(path, "a");
-        pending.each!(p => fh.writeln(p));
+        foreach(path; pending)
+        {
+            append(path.expand);
+        }
     }
+
+    auto list()
+    {
+        return database.execute("SELECT path, mode FROM queue")
+            .map!(row => tuple(row["path"].as!string, row["mode"].as!Mode));
+    }
+}
+
+version(unittest)
+{
+    import std;
 }
 
 unittest
@@ -92,34 +135,10 @@ unittest
     auto clipboard = Clipboard(path);
 
     writeln("Test that appending a single item to clipboard is working");
-    clipboard.append("/tmp/ctrl/clipboard.test", Mode.COPY);
+    clipboard.append("/tmp/ctrl/clipboard.test", Mode.MOVE);
     assert(
-        clipboard.list.array == ["/tmp/ctrl/clipboard.test"],
-        "Clipboard does not contain expected path. Clipboard contents : " ~ clipboard.list.join(", ")
-    );
-    writeln("OK");
-    writeln("");
-}
-
-unittest
-{
-    import std.stdio : writeln;
-    import std.file : remove;
-    import std.array : join;
-    import std.algorithm : equal;
-    import std.range : chain, only;
-
-    string path = "/tmp/ctrl/clipboard.test";
-    scope(exit) path.remove();
-    auto clipboard = Clipboard(path);
-
-    writeln("Test that appending multiple items to clipboard is working");
-    clipboard.append("/tmp/ctrl/clipboard.test", Mode.COPY);
-    auto fileList = ["/tmp/a", "/tmp/b", "tmp/c"];
-    clipboard.append(fileList);
-    assert(
-        clipboard.list.equal("/tmp/ctrl/clipboard.test".only.chain(fileList)),
-        "Clipboard does not contain expected paths. Clipboard contents : " ~ clipboard.list.join(", ")
+        clipboard.list.array == [tuple("/tmp/ctrl/clipboard.test", Mode.MOVE)],
+        "Clipboard does not contain expected path. Clipboard contents : " ~ clipboard.list.map!(to!string).join(", ")
     );
     writeln("OK");
     writeln("");
@@ -135,8 +154,15 @@ unittest
 
     writeln("Test that has() is working");
     clipboard.append("/tmp/b", Mode.COPY);
-    assert(clipboard.has("/tmp/b"), "Clipboard does not contain expected path");
+    assert(clipboard.has("/tmp/b", Mode.COPY), "Clipboard does not contain expected path for Mode.COPY");
+    assert(!clipboard.has("/tmp/b", Mode.MOVE), "Clipboard does not contain expected path for Mode.MOVE");
+
+    clipboard.append("/tmp/a", Mode.MOVE);
+    assert(!clipboard.has("/tmp/a", Mode.COPY), "Clipboard does not contain expected path for Mode.COPY");
+    assert(clipboard.has("/tmp/a", Mode.MOVE), "Clipboard does not contain expected path for Mode.MOVE");
+
     assert(!clipboard.has("/tmp/foobar"), "Clipboard contains invalid path");
+
     writeln("OK");
     writeln("");
 }

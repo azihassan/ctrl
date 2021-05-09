@@ -4,7 +4,7 @@ status=0
 echo Running $0
 
 #setup
-ctrl -V --reset
+ctrl --reset
 
 #test
 touch a
@@ -21,7 +21,7 @@ else
 fi
 
 touch a
-content=$(ctrl -C a && ctrl -V --list)
+content=$(ctrl -C a && ctrl --list)
 expected="$(pwd)/a"
 if [ "$content" = "$expected" ]
 then
@@ -33,6 +33,6 @@ fi
 
 #cleanup
 rm a
-ctrl -V --reset
+ctrl --reset
 
 exit $status
