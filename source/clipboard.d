@@ -68,7 +68,7 @@ struct SqliteClipboard
 
         this.database = Database(path);
         this.database.run(`CREATE TABLE IF NOT EXISTS queue (
-            path TEXT NOT NULL,
+            path TEXT NOT NULL UNIQUE,
             mode TEXT NOT NULL
         )`);
     }
@@ -81,8 +81,10 @@ struct SqliteClipboard
 
     void append(string pending, Mode mode)
     {
-        auto statement = this.database.prepare("INSERT INTO queue (path, mode) VALUES (:path, :mode)");
-        statement.bindAll(pending, mode.to!string);
+        auto statement = this.database.prepare("INSERT INTO queue (path, mode) VALUES (:path, :mode) ON CONFLICT(path) DO UPDATE SET mode = :mode");
+        statement.bind(":path", pending);
+        statement.bind(":mode", mode.to!string);
+        statement.bind(":mode", mode.to!string);
         statement.execute();
     }
 
@@ -147,7 +149,7 @@ unittest
     import std.stdio : writeln;
     import std.file : remove;
     string path = "/tmp/ctrl/clipboard.test";
-    //scope(exit) path.remove();
+    scope(exit) path.remove();
     auto clipboard = Clipboard(path);
 
     writeln("Test that has() is working");

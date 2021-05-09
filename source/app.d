@@ -45,7 +45,7 @@ void main(string[] args)
         Tuple!(string, Mode, Flag!"force")[] pending;
         foreach(arg; args[1 .. $])
         {
-            pending ~= tuple(buildPath(filesystem.workingDirectory, arg), Mode.COPY, No.force);
+            pending ~= tuple(buildPath(filesystem.workingDirectory, arg), Mode.COPY, force ? Yes.force : No.force);
         }
         ctrl.queue(pending);
     }
@@ -55,7 +55,7 @@ void main(string[] args)
         Tuple!(string, Mode, Flag!"force")[] pending;
         foreach(arg; args[1 .. $])
         {
-            pending ~= tuple(buildPath(filesystem.workingDirectory, arg), Mode.MOVE, No.force);
+            pending ~= tuple(buildPath(filesystem.workingDirectory, arg), Mode.MOVE, force ? Yes.force : No.force);
         }
         ctrl.queue(pending);
     }
