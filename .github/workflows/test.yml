@@ -16,5 +16,5 @@ jobs:
     - name: E2E tests
       run: cd tests && sh run_tests.sh
     - name: Dub tests
-      run: dub test
+      run: dub test --coverage && bash <(curl -s https://codecov.io/bash)
 
