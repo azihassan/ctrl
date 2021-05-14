@@ -1,4 +1,4 @@
-# Ctrl [![Build Status](https://travis-ci.com/azihassan/ctrl.svg?branch=master)](https://travis-ci.com/azihassan/ctrl) [![codecov](https://codecov.io/gh/azihassan/ctrl/branch/master/graph/badge.svg?token=2IILST4RV8)](https://codecov.io/gh/azihassan/ctrl)
+# Ctrl ![build](https://github.com/azihassan/ctrl/actions/workflows/main.yml/badge.svg?branch=master) [![codecov](https://codecov.io/gh/azihassan/ctrl/branch/master/graph/badge.svg?token=2IILST4RV8)](https://codecov.io/gh/azihassan/ctrl)
 
 Ctrl is a terminal tool that allows you to copy a file THEN paste it elsewhere. It reproduces the copy/pasting behavior of file explorers on the terminal.
 
