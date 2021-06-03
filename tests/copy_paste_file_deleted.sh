@@ -30,7 +30,7 @@ cd tmp
 
 content=$(ctrl -V)
 cd ..
-expected="$(pwd)/a no longer exists."
+expected="[Error] $(pwd)/a no longer exists."
 
 if [ "$content" = "$expected" ]; then
     echo 2/2 OK

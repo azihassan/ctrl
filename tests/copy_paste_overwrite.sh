@@ -21,7 +21,7 @@ echo new > a
 ctrl -C a
 cd tmp
 content=$(ctrl -V)
-expected="a already exists in this directory."
+expected="[Error] a already exists in this directory."
 
 if [ "$content" = "$expected" ]
 then
