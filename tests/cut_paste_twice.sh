@@ -17,7 +17,7 @@ fi
 echo foo > a
 ctrl -X a
 content=$(ctrl -C a)
-expected="$(pwd)/a is already queued for moving"
+expected="[Error] $(pwd)/a is already queued for moving"
 
 if [ "$content" = "$expected" ]
 then

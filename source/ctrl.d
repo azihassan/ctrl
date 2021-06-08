@@ -41,7 +41,7 @@ struct Ctrl
             auto force = pending[2];
             if(!filesystem.exists(path))
             {
-                logger(path, " does not exist");
+                logger("[Error] ", path, " does not exist");
                 errors ~= Error(ErrorType.NOT_FOUND, path, mode);
                 continue;
             }
@@ -49,7 +49,7 @@ struct Ctrl
             if(clipboard.has(path) && !force)
             {
                 Tuple!(string, Mode) existing = clipboard.get(path);
-                logger(path, " is already queued for ", existing[1] == Mode.COPY ? "copying" : "moving");
+                logger("[Error] ", path, " is already queued for ", existing[1] == Mode.COPY ? "copying" : "moving");
                 errors ~= Error(ErrorType.ALREADY_QUEUED, path, mode);
                 continue;
             }
@@ -67,21 +67,27 @@ struct Ctrl
             if(filesystem.exists(localFile) && !force)
             {
                 errors ~= Error(ErrorType.ALREADY_EXISTS_IN_DESTINATION, path.idup);
-                logger(path.baseName, " already exists in this directory.");
+                logger("[Error] ", path.baseName, " already exists in this directory.");
                 continue;
             }
 
             if(!filesystem.exists(path))
             {
                 errors ~= Error(ErrorType.NO_LONGER_EXISTS, path.idup);
-                logger(path, " no longer exists.");
+                logger("[Error] ", path, " no longer exists.");
                 continue;
             }
 
             final switch(mode) with(Mode)
             {
-                case COPY: filesystem.copy(path.idup, localFile); break;
-                case MOVE: filesystem.move(path.idup, localFile); break;
+                case COPY:
+                    filesystem.copy(path.idup, localFile);
+                    logger("[OK] ", localFile);
+                    break;
+                case MOVE:
+                    filesystem.move(path.idup, localFile);
+                    logger("[OK] ", localFile);
+                    break;
             }
         }
 
@@ -145,7 +151,7 @@ unittest
 
     auto errors = ctrl.queue([tuple(clipboardPath, Mode.COPY)]);
     assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
-    assert(clipboard.has(clipboardPath));
+    assert(clipboard.has(clipboardPath, Mode.COPY));
 }
 
 unittest
@@ -168,6 +174,7 @@ unittest
     assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
     assert(errors[0].type == ErrorType.NOT_FOUND);
     assert(errors[0].subject == bogusPath);
+    assert(errors[0].mode == Mode.COPY);
     assert(!clipboard.has(bogusPath), "Expected clipboard not to have " ~ bogusPath);
 }
 
@@ -195,7 +202,7 @@ unittest
     assert(errors[0].type == ErrorType.ALREADY_QUEUED);
     assert(errors[0].subject == clipboardPath);
     assert(errors[0].mode == Mode.COPY);
-    assert(clipboard.has(clipboardPath), "Expected clipboard to have " ~ clipboardPath ~ ", but it didn't");
+    assert(clipboard.has(clipboardPath, Mode.COPY), "Expected clipboard to have " ~ clipboardPath ~ ", but it didn't");
 
     errors = ctrl.queue([
         tuple(clipboardPath, Mode.MOVE),
@@ -224,26 +231,15 @@ unittest
     auto logger = Logger(1, File(logPath, "w"));
     auto ctrl = Ctrl(clipboard, filesystem, logger);
 
-    auto errors = ctrl.queue([
+    ctrl.queue([
         tuple(clipboardPath, Mode.COPY),
     ]);
-    errors ~= ctrl.queue([
+    auto errors = ctrl.queue([
         tuple(clipboardPath, Mode.MOVE, Yes.force)
     ]);
 
     assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
     assert(clipboard.has(clipboardPath, Mode.MOVE), "Expected clipboard to have " ~ clipboardPath ~ ", but it didn't");
-
-    errors = ctrl.queue([
-        tuple(clipboardPath, Mode.COPY),
-        tuple(clipboardPath, Mode.MOVE)
-    ]);
-
-    assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
-    assert(errors[0].type == ErrorType.ALREADY_QUEUED);
-    assert(errors[0].subject == clipboardPath);
-    assert(errors[0].mode == Mode.COPY);
-    assert(clipboard.has(clipboardPath), "Expected clipboard to have " ~ clipboardPath ~ ", but it didn't");
 }
 
 unittest
@@ -281,7 +277,7 @@ unittest
     assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
     assert(errors[0].type == ErrorType.NO_LONGER_EXISTS, "Expected error type to be NO_LONGER_EXISTS, instead it was " ~ errors[0].type.to!string);
     assert(errors[0].subject == tmpFile);
-    assert(clipboard.has(tmpFile), "Expected clipboard to have " ~ tmpFile ~ ", but it didn't");
+    assert(clipboard.has(tmpFile, Mode.COPY), "Expected clipboard to have " ~ tmpFile ~ ", but it didn't");
 }
 
 unittest
@@ -325,7 +321,7 @@ unittest
     assert(!errors.empty, "Expected errors not to be empty, instead it was empty");
     assert(errors[0].type == ErrorType.ALREADY_EXISTS_IN_DESTINATION, "Expected error type to be ALREADY_EXISTS_IN_DESTINATION, instead it was " ~ errors[0].type.to!string);
     assert(errors[0].subject == sourcePath);
-    assert(clipboard.has(sourcePath), "Expected clipboard to still have " ~ sourcePath ~ ", but it didn't");
+    assert(clipboard.has(sourcePath, Mode.COPY), "Expected clipboard to still have " ~ sourcePath ~ ", but it didn't");
     assert(destinationPath.readText() == "don't overwrite me", "Expected destination to contain 'don't overwrite me', instead it has : '" ~ destinationPath.readText() ~ "'");
 }
 
@@ -413,6 +409,10 @@ unittest
     assert(errors.empty, "Expected errors to be empty, instead it has " ~ errors.map!(to!string).join(", "));
     assert(!clipboard.has(sourcePath), "Expected clipboard not to have " ~ sourcePath ~ ", but it did");
     assert(destinationPath.readText() == "copy me");
+
+    auto expectedLogs = "[OK] " ~ buildPath(getcwd(), destinationPath);
+    auto actualLogs = logPath.readText();
+    assert(actualLogs.strip() == expectedLogs, "Expected logs to be " ~ expectedLogs ~ ", instead it was " ~ actualLogs);
 }
 
 unittest
@@ -440,7 +440,7 @@ unittest
         }
     }
 
-    File(sourcePath, "w").write("copy me");
+    File(sourcePath, "w").write("move me");
 
     auto clipboard = Clipboard(clipboardPath);
     auto filesystem = Filesystem();
@@ -455,6 +455,6 @@ unittest
 
     assert(errors.empty, "Expected errors to be empty, instead it has " ~ errors.map!(to!string).join(", "));
     assert(!clipboard.has(sourcePath), "Expected clipboard not to have " ~ sourcePath ~ ", but it did");
-    assert(destinationPath.readText() == "copy me");
+    assert(destinationPath.readText() == "move me");
     assert(!sourcePath.exists);
 }

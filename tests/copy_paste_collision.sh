@@ -24,8 +24,9 @@ ctrl -C b
 ctrl -C c
 cd tmp
 content=$(ctrl -V)
-expected="a already exists in this directory."
-echo $content
+expected="[Error] a already exists in this directory.
+[OK] $(pwd)/b
+[OK] $(pwd)/c"
 
 if [ "$content" = "$expected" ]
 then

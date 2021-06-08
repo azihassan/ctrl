@@ -10,7 +10,7 @@ ctrl --reset
 touch a
 rm a
 content=$(ctrl -C a)
-expected="$(pwd)/a does not exist"
+expected="[Error] $(pwd)/a does not exist"
 
 if [ "$content" = "$expected" ]
 then
