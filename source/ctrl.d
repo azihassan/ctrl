@@ -458,3 +458,67 @@ unittest
     assert(destinationPath.readText() == "move me");
     assert(!sourcePath.exists);
 }
+
+unittest
+{
+    writeln("Should paste directory correctly if there are no errors");
+    scope(success) writeln("OK\n");
+
+    string clipboardPath = "/tmp/clipboard.tmp";
+    string logPath = "/tmp/clipboard.log";
+
+    string[string] source = [
+        "root": "/tmp/tocopy",
+        "foo": "/tmp/tocopy/foo",
+        "nested": "/tmp/tocopy/nested",
+        "bar": "/tmp/tocopy/nested/bar"
+    ];
+
+    string[string] destination = [
+        "root": "tocopy",
+        "foo": "tocopy/foo",
+        "nested": "tocopy/nested",
+        "bar": "tocopy/nested/bar"
+    ];
+
+    scope(exit) clipboardPath.remove();
+    scope(exit) logPath.remove();
+    scope(exit)
+    {
+        if(source["root"].exists)
+        {
+            source["root"].rmdirRecurse();
+        }
+        if(destination["root"].exists)
+        {
+            destination["root"].rmdirRecurse();
+        }
+    }
+
+    mkdir(source["root"]);
+    mkdir(source["nested"]);
+    File(source["foo"], "w").write("copy me 1");
+    File(source["bar"], "w").write("copy me 2");
+
+    auto clipboard = Clipboard(clipboardPath);
+    auto filesystem = Filesystem();
+    auto logger = Logger(1, File(logPath, "w"));
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
+
+    auto errors = ctrl.queue([tuple(source["root"], Mode.COPY)]);
+    assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
+    assert(clipboard.has(source["root"]), "Expected clipboard to have " ~ source["root"] ~ ", but it didn't");
+
+    errors = ctrl.execute();
+
+    assert(errors.empty, "Expected errors to be empty, instead it has " ~ errors.map!(to!string).join(", "));
+    assert(!clipboard.has(source["root"]), "Expected clipboard not to have " ~ source["root"] ~ ", but it did");
+    assert(destination["foo"].readText() == "copy me 1");
+    assert(destination["bar"].readText() == "copy me 2");
+    assert(destination["root"].isDir());
+    assert(destination["nested"].isDir());
+
+    auto expectedLogs = "[OK] " ~ buildPath(getcwd(), destination["root"]);
+    auto actualLogs = logPath.readText();
+    assert(actualLogs.strip() == expectedLogs, "Expected logs to be " ~ expectedLogs ~ ", instead it was " ~ actualLogs);
+}
