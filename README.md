@@ -19,4 +19,19 @@ $ cat file
 foobar
 ```
 
+The arguments get be listed by running `ctrl -h` or `ctrl --help` :
+
+```bash
+$ ctrl -h
+Ctrl
+-C       --copy Queue given file for copying
+-X        --cut Queue given file for moving
+-V      --paste Paste clipboard contents in current directory
+-l       --list Display the pending actions
+-r      --reset Empty the clipboard
+-f      --force Overwrite existing files when pasting
+-v --verbosity+ Verbosity level
+-h       --help This help information.
+```
+
 As this tool is under development, further examples and details will be added down the road.
