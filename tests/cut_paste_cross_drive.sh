@@ -36,8 +36,10 @@ else
 fi
 
 mkdir tmp
-cd tmp
-ctrl -V >> /dev/null
+mkdir -p /tmp/cross-device-directory
+sudo mount --bind tmp /tmp/cross-device-directory
+cd /tmp/cross-device-directory
+ctrl -V > /dev/null
 content=$(cat a)
 expected=foo
 
@@ -48,16 +50,17 @@ else
     echo 3/4 Failed : "$expected" != "$content"
 fi
 
-
-if [ ! -f ../a ]; then
+cd - > /dev/null
+if [ ! -f a ]; then
     echo 4/4 OK
 else
     status=1
-    echo 4/4 Failed : expected ../a not to exist, but it exists
+    echo 4/4 Failed : expected ./a not to exist, but it exists
 fi
 
 #cleanup
-cd ..
+sudo umount /tmp/cross-device-directory
+rm -rf /tmp/cross-device-directory
 rm -rf tmp
 rm -f a
 ctrl --reset
