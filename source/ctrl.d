@@ -458,3 +458,72 @@ unittest
     assert(destinationPath.readText() == "move me");
     assert(!sourcePath.exists);
 }
+
+unittest
+{
+    import std.process : execute;
+    writeln("Should move file across mount points");
+    scope(success) writeln("OK\n");
+
+    string clipboardPath = "/tmp/clipboard.tmp";
+    string logPath = "/tmp/clipboard.log";
+
+    string sourceDirectory = buildPath(getcwd(), "source-directory");
+    string sourcePath = buildPath(sourceDirectory, "tomove");
+    string mountedSourceDirectory = "/tmp/cross-device-directory";
+    string mountedSourcePath = buildPath(mountedSourceDirectory, "tomove");
+
+    string destinationDirectory = getcwd();
+    string destinationPath = buildPath(destinationDirectory, "tomove");
+
+    sourceDirectory.mkdirRecurse();
+    mountedSourceDirectory.mkdirRecurse();
+    File(sourcePath, "w").write("move me");
+
+    auto mountCommand = execute([
+            "sudo", "mount", "--bind", sourceDirectory, mountedSourceDirectory
+    ]);
+    assert(mountCommand.status == 0, "Failed to mount " ~ mountedSourceDirectory ~ " : " ~ mountCommand.output);
+
+    scope(exit) clipboardPath.remove();
+    scope(exit) logPath.remove();
+    scope(exit)
+    {
+        if(sourcePath.exists)
+        {
+            sourcePath.remove();
+        }
+        if(destinationPath.exists)
+        {
+            destinationPath.remove();
+        }
+        if(sourceDirectory.exists)
+        {
+            sourceDirectory.rmdirRecurse();
+        }
+        if(mountedSourceDirectory.exists)
+        {
+            auto umountCommand = execute([
+                    "sudo", "umount", mountedSourceDirectory
+            ]);
+            assert(umountCommand.status == 0, "Failed to unmount " ~ mountedSourceDirectory ~ " : " ~ umountCommand.output);
+            mountedSourceDirectory.rmdirRecurse();
+        }
+    }
+
+    auto clipboard = Clipboard(clipboardPath);
+    auto filesystem = Filesystem();
+    auto logger = Logger(1, File(logPath, "w"));
+    auto ctrl = Ctrl(clipboard, filesystem, logger);
+
+    auto errors = ctrl.queue([tuple(mountedSourcePath, Mode.MOVE)]);
+    assert(errors.empty, "Expected errors to be empty, instead found : " ~ errors.map!(to!string).join("\n"));
+    assert(clipboard.has(mountedSourcePath), "Expected clipboard to have " ~ sourcePath ~ ", but it didn't");
+
+    errors = ctrl.execute();
+
+    assert(errors.empty, "Expected errors to be empty, instead it has " ~ errors.map!(to!string).join(", "));
+    assert(!clipboard.has(mountedSourcePath), "Expected clipboard not to have " ~ sourcePath ~ ", but it did");
+    assert(destinationPath.readText() == "move me");
+    assert(!sourcePath.exists);
+}
